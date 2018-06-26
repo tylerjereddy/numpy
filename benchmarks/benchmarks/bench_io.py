@@ -181,3 +181,32 @@ class LoadtxtUseColsCSV(Benchmark):
                    delimiter=',',
                    usecols=usecols)
 
+class LoadtxtCSVDateTime(Benchmark):
+    # benchmarks for np.loadtxt operating with
+    # datetime data in a CSV file
+
+    params = [20, 200, 2000, 20000]
+    param_names = ['num_lines']
+
+    def setup(self, num_lines):
+        # create the equivalent of a two-column CSV file
+        # with date strings in the first column and random
+        # floating point data in the second column
+        dates = np.arange('today', 20, dtype=np.datetime64)
+        values = np.random.rand(20)
+        date_line = ''
+        index = 0
+
+        for entry in dates:
+            date_line += (str(entry) + ',' + str(values[index]) + '\n')
+            index += 1
+
+        # expand data to specified number of lines
+        data = date_line * num_lines
+        self.csv_data = StringIO(data)
+
+    def time_loadtxt_csv_datetime(self, num_lines):
+        X = np.loadtxt(self.csv_data,
+                       delimiter=',',
+                       dtype=([('dates', 'M8[us]'),
+                               ('values', 'float64')]))
