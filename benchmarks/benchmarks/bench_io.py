@@ -72,8 +72,8 @@ class LoadtxtCSVComments(Benchmark):
     param_names = ['num_lines']
 
     def setup(self, num_lines):
-        data = ['1,2,3 # comment'] * num_lines
-        self.data_comments = StringIO('\n'.join(data))
+        data = [u'1,2,3 # comment'] * num_lines
+        self.data_comments = StringIO(u'\n'.join(data))
 
     def time_comment_loadtxt_csv(self, num_lines):
         # benchmark handling of lines with comments
@@ -94,8 +94,8 @@ class LoadtxtCSVdtypes(Benchmark):
     param_names = ['dtype', 'num_lines']
 
     def setup(self, dtype, num_lines):
-        data = ['5, 7, 888'] * num_lines
-        self.csv_data = StringIO('\n'.join(data))
+        data = [u'5, 7, 888'] * num_lines
+        self.csv_data = StringIO(u'\n'.join(data))
 
     def time_loadtxt_dtypes_csv(self, dtype, num_lines):
         # benchmark loading arrays of various dtypes
@@ -110,8 +110,8 @@ class LoadtxtCSVStructured(Benchmark):
 
     def setup(self):
         num_lines = 50000
-        data = ["M, 21, 72, X, 155"] * num_lines
-        self.csv_data = StringIO('\n'.join(data))
+        data = [u"M, 21, 72, X, 155"] * num_lines
+        self.csv_data = StringIO(u'\n'.join(data))
 
     def time_loadtxt_csv_struct_dtype(self):
         np.loadtxt(self.csv_data,
@@ -153,10 +153,10 @@ class LoadtxtReadUint64Integers(Benchmark):
 
     def setup(self, size):
         arr = np.arange(size).astype('uint64') + 2**63
-        self.data1 = StringIO('\n'.join(arr.astype(str).tolist()))
+        self.data1 = StringIO(u'\n'.join(arr.astype(str).tolist()))
         arr = arr.astype(object)
         arr[500] = -1
-        self.data2 = StringIO('\n'.join(arr.astype(str).tolist()))
+        self.data2 = StringIO(u'\n'.join(arr.astype(str).tolist()))
 
     def time_read_uint64(self, size):
         np.loadtxt(self.data1)
@@ -173,8 +173,8 @@ class LoadtxtUseColsCSV(Benchmark):
 
     def setup(self, usecols):
         num_lines = 5000
-        data = ['0, 1, 2, 3, 4, 5, 6, 7, 8, 9'] * num_lines
-        self.csv_data = StringIO('\n'.join(data))
+        data = [u'0, 1, 2, 3, 4, 5, 6, 7, 8, 9'] * num_lines
+        self.csv_data = StringIO(u'\n'.join(data))
 
     def time_loadtxt_usecols_csv(self, usecols):
         np.loadtxt(self.csv_data,
@@ -194,7 +194,7 @@ class LoadtxtCSVDateTime(Benchmark):
         # floating point data in the second column
         dates = np.arange('today', 20, dtype=np.datetime64)
         values = np.random.rand(20)
-        date_line = ''
+        date_line = u''
         index = 0
 
         for entry in dates:
