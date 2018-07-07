@@ -73,6 +73,10 @@ class LoadtxtCSVComments(Benchmark):
 
     def setup(self, num_lines):
         data = [u'1,2,3 # comment'] * num_lines
+        # unfortunately, timeit will only run setup()
+        # between repeat events, but not for iterations
+        # within repeats, so the StringIO object
+        # will have to be rewinded in the benchmark proper
         self.data_comments = StringIO(u'\n'.join(data))
 
     def time_comment_loadtxt_csv(self, num_lines):
@@ -81,6 +85,11 @@ class LoadtxtCSVComments(Benchmark):
 
         # inspired by similar benchmark in pandas
         # for read_csv
+
+        # need to rewind StringIO object (unfortunately
+        # confounding timing result somewhat) for every
+        # call to timing test proper
+        self.data_comments.seek(0)
         np.loadtxt(self.data_comments,
                    delimiter=',')
 
@@ -100,6 +109,11 @@ class LoadtxtCSVdtypes(Benchmark):
     def time_loadtxt_dtypes_csv(self, dtype, num_lines):
         # benchmark loading arrays of various dtypes
         # from csv files
+
+        # state-dependent timing benchmark requires
+        # rewind of StringIO object
+        self.csv_data.seek(0)
+
         np.loadtxt(self.csv_data,
                    delimiter=',',
                    dtype=dtype)
@@ -114,6 +128,10 @@ class LoadtxtCSVStructured(Benchmark):
         self.csv_data = StringIO(u'\n'.join(data))
 
     def time_loadtxt_csv_struct_dtype(self):
+        # obligate rewind of StringIO object
+        # between iterations of a repeat:
+        self.csv_data.seek(0)
+
         np.loadtxt(self.csv_data,
                    delimiter=',',
                    dtype=[('category_1', 'S1'),
@@ -159,9 +177,15 @@ class LoadtxtReadUint64Integers(Benchmark):
         self.data2 = StringIO(u'\n'.join(arr.astype(str).tolist()))
 
     def time_read_uint64(self, size):
+        # mandatory rewind of StringIO object
+        # between iterations of a repeat:
+        self.data1.seek(0)
         np.loadtxt(self.data1)
 
     def time_read_uint64_neg_values(self, size):
+        # mandatory rewind of StringIO object
+        # between iterations of a repeat:
+        self.data2.seek(0)
         np.loadtxt(self.data2)
 
 class LoadtxtUseColsCSV(Benchmark):
@@ -177,6 +201,9 @@ class LoadtxtUseColsCSV(Benchmark):
         self.csv_data = StringIO(u'\n'.join(data))
 
     def time_loadtxt_usecols_csv(self, usecols):
+        # must rewind StringIO because of state
+        # dependence of file reading
+        self.csv_data.seek(0)
         np.loadtxt(self.csv_data,
                    delimiter=',',
                    usecols=usecols)
@@ -193,6 +220,7 @@ class LoadtxtCSVDateTime(Benchmark):
         # with date strings in the first column and random
         # floating point data in the second column
         dates = np.arange('today', 20, dtype=np.datetime64)
+        np.random.seed(123)
         values = np.random.rand(20)
         date_line = u''
         index = 0
@@ -202,10 +230,13 @@ class LoadtxtCSVDateTime(Benchmark):
             index += 1
 
         # expand data to specified number of lines
-        data = date_line * num_lines
+        data = date_line * int(num_lines / 20.)
         self.csv_data = StringIO(data)
 
     def time_loadtxt_csv_datetime(self, num_lines):
+        # rewind StringIO object -- the timing iterations
+        # are state-dependent
+        self.csv_data.seek(0)
         X = np.loadtxt(self.csv_data,
                        delimiter=',',
                        dtype=([('dates', 'M8[us]'),
