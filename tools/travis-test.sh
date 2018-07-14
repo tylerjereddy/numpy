@@ -113,10 +113,18 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full --coverage=$RUN_COVERAGE
   else
-    $PYTHON ../tools/test-installed-numpy.py -v
+    $PYTHON ../tools/test-installed-numpy.py -v --coverage=$RUN_COVERAGE
   fi
+
+  if [ -n "$RUN_COVERAGE" ]; then
+    # Upload coverage files to codecov
+    pip install codecov
+    cd build
+    codecov
+  fi
+
   if [ -n "$USE_ASV" ]; then
     pushd ../benchmarks
     $PYTHON `which asv` machine --machine travis
