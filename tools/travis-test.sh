@@ -105,6 +105,10 @@ run_test()
     export PYTHONPATH=$PWD
   fi
 
+  if [ -n "$RUN_COVERAGE" ]; then
+    COVERAGE_FLAG=--coverage
+  fi
+
   # We change directories to make sure that python won't find the copy
   # of numpy in the source directory.
   mkdir -p empty
@@ -113,15 +117,15 @@ run_test()
     "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   export PYTHONWARNINGS=default
   if [ -n "$RUN_FULL_TESTS" ]; then
-    $PYTHON ../tools/test-installed-numpy.py -v --mode=full --coverage=$RUN_COVERAGE
+    $PYTHON ../tools/test-installed-numpy.py -v --mode=full $COVERAGE_FLAG
   else
-    $PYTHON ../tools/test-installed-numpy.py -v --coverage=$RUN_COVERAGE
+    $PYTHON ../tools/test-installed-numpy.py -v
   fi
 
   if [ -n "$RUN_COVERAGE" ]; then
     # Upload coverage files to codecov
     pip install codecov
-    cd build
+    cd build/coverage
     codecov
   fi
 
