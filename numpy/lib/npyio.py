@@ -1097,16 +1097,24 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # over-allocating and shrinking the array later may be faster but is
         # probably not relevant compared to the cost of actually reading and
         # converting the data
-        X = None
-        for x in read_data(_loadtxt_chunksize):
-            if X is None:
-                X = np.array(x, dtype)
-            else:
-                nshape = list(X.shape)
-                pos = nshape[0]
-                nshape[0] += len(x)
-                X.resize(nshape, refcheck=False)
-                X[pos:, ...] = x
+
+        # we initialize the storage array X (where text data is being
+        # placed) outside of the main loop in which its values are 
+        # filled in because we want to avoid checking if X is None at
+        # each chunk read event
+        gen = read_data(_loadtxt_chunksize)
+        try:
+            X = np.array(next(gen), dtype)
+        except StopIteration:
+            X = None
+
+        for x in gen:
+            nshape = list(X.shape)
+            pos = nshape[0]
+            nshape[0] += len(x)
+            X.resize(nshape, refcheck=False)
+            X[pos:, ...] = x
+
     finally:
         if fown:
             fh.close()
