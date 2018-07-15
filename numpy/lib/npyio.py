@@ -1106,7 +1106,13 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         try:
             X = np.array(next(gen), dtype)
         except StopIteration:
-            X = None
+            X = np.array([], dtype)
+            if X.ndim < ndmin:
+                if ndmin == 1:
+                    X = np.atleast_1d(X)
+                elif ndmin == 2:
+                    X = np.atleast_2d(X).T
+            return X
 
         for x in gen:
             nshape = list(X.shape)
@@ -1123,9 +1129,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # performance and PyPy friendliness, we break the cycle:
         flatten_dtype_internal = None
         pack_items = None
-
-    if X is None:
-        X = np.array([], dtype)
 
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
