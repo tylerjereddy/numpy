@@ -887,3 +887,9 @@ def test_naint64_nbytes():
     assert_(c.strides == (18, 9))
     assert_(c.nbytes == 54)
     assert_(c.itemsize == 9)
+
+def test_naint64_not_subclassed():
+    # test that np.naint64 is not a subclass of np.int64; this
+    # requirement is based on focus to avoid subclassing for new
+    # dtypes after SciPy 2018 discussion of dtypes in NumPy
+    assert_(not issubclass(np.naint64, np.int64))
