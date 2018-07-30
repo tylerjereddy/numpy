@@ -858,3 +858,32 @@ def test_naint64_all_na_max_reduction():
     a = np.array([np.NA, np.NA, np.NA], dtype=np.naint64)
     assert_(a.max() == np.NA)
     assert_(a.min() == np.NA)
+
+def test_naint64_nbytes():
+    # the naint64 dtype specification should provide for
+    # 8 integer bytes + 1 mask byte per element
+    # so we expect 9 bytes per element
+
+    a = np.array([1, np.NA, 33], dtype=np.naint64)
+    assert_(a.nbytes == 27)
+    assert_(a.itemsize == 9)
+    assert_(a.strides == 9)
+
+    # this should hold for striding across columns and down to new
+    # rows
+    b = np.array([[5, 2, np.NA],
+                  [np.NA, np.NA, 9901]],
+                 dtype=np.naint64)
+    assert_(b.strides == (9, 27))
+    assert_(b.nbytes == 54)
+    assert_(b.itemsize == 9)
+
+    # the mask byte memory usage should respect Fortran memory
+    # contiguity
+    c = b.copy(order='F')
+    # move over 2 9-byte elements down a column to reach the
+    # the next column and only over 1 9-byte element to move to
+    # the next row
+    assert_(c.strides == (18, 9))
+    assert_(c.nbytes == 54)
+    assert_(c.itemsize == 9)
