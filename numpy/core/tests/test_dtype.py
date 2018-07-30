@@ -849,12 +849,12 @@ def test_naint64_all_na_sum_reduction():
     # test that reduction operations like sum() return 0
     # on np.naint64 arrays that contain only masked (missing) values
     # this matches the skipna behavior from NEP-0012
-    a = np.array([np.NA, np.NA, np.NA])
+    a = np.array([np.NA, np.NA, np.NA], dtype=np.naint64)
     assert_(a.sum() == 0)
 
 def test_naint64_all_na_max_reduction():
     # test that max() and min() of all-na naint64 array returns
     # np.NA as per NEP-0012
-    a = np.array([np.NA, np.NA, np.NA])
+    a = np.array([np.NA, np.NA, np.NA], dtype=np.naint64)
     assert_(a.max() == np.NA)
     assert_(a.min() == np.NA)
