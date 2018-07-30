@@ -728,3 +728,133 @@ def test_dtypes_are_true():
 def test_invalid_dtype_string():
     # test for gh-10440
     assert_raises(TypeError, np.dtype, 'f8,i8,[f8,i8]')
+
+def test_naint64_attribute_registration():
+    # test that NumPy has registered the attribute
+    # 'naint64' for the experimental dtype that handles
+    # missing 64-bit integer values / data structures
+    a = np.array([1, 2], dtype=np.naint64)
+    assert_(a.dtype == np.naint64)
+
+def test_npna_singleton_registration():
+    # test that np.NA singleton has been "registered"
+    # in the NumPy namespace because np.NA will be used
+    # to mask values for the naint64 dtype
+    # inspired by NEP-0012
+    x = np.NA
+
+def test_naint64_simple_sum():
+    # test that "simple" naint64 arrays can be summed together
+    # in a similar manner to int64 arrays when there are no
+    # np.NA values
+    a = np.array([1, 2, 3], dtype=np.naint64)
+    b = np.array([2, 7, 12], dtype=np.naint64)
+    result = a + b
+    expected = np.array([3, 9, 15], dtype=np.naint64)
+    assert_equal(result, expected)
+
+def test_naint64_na_sum():
+    # test that np.NA values are IGNORED in reduction operations
+    # like sum(); eventually it may be desirable to add a flag
+    # to allow propagation of the NA instead of ignoring it as
+    # in NEP-0012, but for now let's set behavior to ignore
+    # np.NA for reductions
+    a = np.array([3, 9, 10, np.NA, 5, np.NA], dtype=np.naint64)
+    result = a.sum()
+    expected = 27
+    assert_(result == expected)
+
+def test_naint64_na_average():
+    # test that np.NA values are IGNORED for a statistical reduction
+    # operation like average() operating on np.naint64 dtype
+    a = np.array([5, np.NA, 10, np.NA], dtype=np.naint64)
+    result = np.average(a)
+    expected = 7.5
+    assert_(result == expected)
+
+def test_naint64_storage_reliability():
+    # a view that masks a value in the original array
+    # should not change the data pointed to by the original
+    # array at that position (similar to NEP-0012)
+    a = np.array([1, 2], dtype=np.naint64)
+    expected = a.copy()
+    b = a.view()
+    b[0] = np.NA
+    assert_equal(a, expected)
+
+def test_naint64_repr():
+    # the string "NA" should be used to represent missing
+    # values in naint64 arrays as in NEP-0012
+    a = np.array([np.NA, 1, 2], dtype=np.naint64)
+    assert_(a.__repr__() == 'array([NA, 1, 2])')
+    assert_(a.__str__() == '[NA, 1, 2]')
+
+def test_naint64_repr_flexibility():
+    # the string used to represent missing / masked values
+    # in naint64 arrays should be user-controlled as decribed
+    # in NEP-0012
+    a = np.array([1, 2, np.NA], dtype=np.naint64)
+    np.set_printoptions(nastr='blah')
+    assert_(a.__repr__() == 'array([blah, 1, 2])')
+    assert_(a.__str__() == '[blah, 1, 2]')
+
+def test_npna_comparisons():
+    # test that comparisons with np.NA produce
+    # np.NA as per NEP-0012
+    x = 5
+    result = 5 > np.NA
+    assert_(result == np.NA)
+
+def test_npna_boolean_exception():
+    # test that attempts to treat np.NA as a bool
+    # raise an appropriate exception as per
+    # NEP-0012
+    with assert_raises(TypeError):
+        if np.NA:
+            pass
+
+def test_naint64_error_on_type_mixing():
+    # for now, naint64 implementation is experimental
+    # and mixing with other NumPy types is not supported
+    # test that we raise an appropriate exception when
+    # type mixing is attempted with naint64
+    a = np.array([1, 2, 3], dtype=np.int64)
+    b = np.array([1, 2, 3], dtype=np.naint64)
+    with assert_raises(NotImplementedError):
+        result = a + b
+
+def test_npna_unsupported_assignment_error():
+    # trying to assign np.NA to an array element
+    # when that array has a dtype that doesn't support
+    # missing values should raise an exception
+    a = np.array([1, 2, 3], dtype=np.int64)
+    with assert_raises(NotImplementedError):
+        a[1] = np.NA
+
+def test_naint64_iteration():
+    # as per NEP-0012, we should be able to iterate normally
+    # over an naint64 array with ufuncs handling the np.NA
+    # objects gracefully
+    a = np.arange(5., dtype=np.naint64)
+    a[3] = np.NA
+    for i in range(len(a)):
+        a[i] = np.sum(a[i], 1)
+
+    # reductions like np.sum() should ignore np.NA and propagate
+    # unmasked ints only
+    expected = np.array([1, 2, 3, 1, 5], dtype=np.naint64)
+    assert_equal(a, expected)
+
+def test_naint64_all_na_sum_reduction():
+    # test that reduction operations like sum() return 0
+    # on np.naint64 arrays that contain only masked (missing) values
+    # this matches the skipna behavior from NEP-0012
+    a = np.array([np.NA, np.NA, np.NA])
+    assert_(a.sum() == 0)
+
+def test_naint64_all_na_max_reduction():
+    # test that max() and min() of all-na naint64 array returns
+    # np.NA as per NEP-0012
+    a = np.array([np.NA, np.NA, np.NA])
+    assert_(a.max() == np.NA)
+    assert_(a.min() == np.NA)
