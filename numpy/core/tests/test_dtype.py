@@ -924,6 +924,7 @@ def test_naint64_not_subclassed():
     ('__gt__', 1),
     ('__lt__', 1),
     ('__truediv__', 3.2),
+    ('prod', None)
     ])
 def test_naint64_array_operations_nona(array_attribute,
                                        argument):
@@ -949,3 +950,12 @@ def test_naint64_array_operations_nona(array_attribute,
         # some array attributes like __abs__ don't take arguments
         assert_equal(tst_operator(),
                      ref_operator())
+
+def test_naint64_prod_ignore():
+    # test that ndarrays with dtype=np.naint64 ignore np.NA
+    # values when calculating their product value
+    a = np.array([np.NA, 1, np.NA, 2, np.NA, 3],
+                 dtype=np.naint64)
+    expected = 6
+    actual = a.prod()
+    assert_(actual == expected)
