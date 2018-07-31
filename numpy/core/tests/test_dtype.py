@@ -959,3 +959,29 @@ def test_naint64_prod_ignore():
     expected = 6
     actual = a.prod()
     assert_(actual == expected)
+
+def test_naint64_dual_array_propagation():
+    # test that various operations between two np.naint64 ndarrays
+    # propagate np.NA values rather than trying to ignore them
+    # by setting np.NA to 1 or 0, etc.
+    # this is somewhat in contrast to the behavior with i.e., 
+    # ndarray.sum() or .prod() where the np.NA values may be ignored
+    # I'm not sure if this is a language design contradiction -- for now
+    # I'll run with this and see what happens
+
+    a = np.array([np.NA, 3, np.NA, 1], dtype=np.naint64)
+    b = np.array([15, 3, np.NA, 9], dtype=np.naint64)
+
+    # NOTE: could probably parametrize these for clarity / concision, etc.
+    expected_div = np.array([np.NA, 1, np.NA, 0], dtype=np.naint64)
+    assert_equal(a // b, expected_div)
+    # NOTE: what happens with true division -- float promotion?
+
+    expected_prod = np.array([np.NA, 6, np.NA, 9], dtype=np.naint64)
+    assert_equal(a * b, expected_prod)
+
+    expected_sum = np.array([np.NA, 5, np.NA, 10], dtype=np.naint64)
+    assert_equal(a + b, expected_sum)
+
+    expected_diff = np.array([np.NA, 0, np.NA, -8], dtype=np.naint64)
+    assert_equal(a - b, expected_diff)
