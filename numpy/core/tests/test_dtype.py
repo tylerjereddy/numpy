@@ -895,3 +895,57 @@ def test_naint64_not_subclassed():
     assert_(not issubclass(np.naint64, np.int64))
     # this one is actually true for np.int64:
     assert_(not issubclass(np.naint64, np.int_))
+
+@pytest.mark.parametrize("array_attribute, argument", [
+    # add a scalar to np.naint64 vs. np.int64 arrays
+    ('__add__', 5),
+    # absolute values should match when np.NA absent
+    ('__abs__', None),
+    # multiplication with a scalar should match
+    # NOTE: undecided about interaction with scalar float
+    ('__mul__', 4),
+    # the cubed values should match
+    ('__pow__', 3),
+    # max & min should match
+    ('max', None),
+    ('min', None),
+    # mean should match
+    ('mean', None),
+    # argmax / argmin should match
+    ('argmin', None),
+    ('argmax', None),
+    ('argsort', None),
+    ('nonzero', None),
+    ('cumsum', None),
+    ('cumprod', None),
+    # comparisons should match in absence of np.NA singleton
+    ('__le__', 5),
+    ('__ge__', 5),
+    ('__gt__', 1),
+    ('__lt__', 1),
+    ('__truediv__', 3.2),
+    ])
+def test_naint64_array_operations_nona(array_attribute,
+                                       argument):
+    # for a number of operations with naint64 ndarray objects
+    # we expect the same result as for int64 ndarray objects
+    # as long as there are no np.NA singletons present
+    # try to test this correspondence as thoroughly as possible
+
+    # serves the dual purpose of checking for sensible integer
+    # operation behavior in naint64 and making sure that arrays
+    # for that dtype have some of the appropriate objects implemented
+
+    a = np.array([1, 2], dtype=np.int64)
+    b = np.array([1, 2], dtype=np.naint64)
+
+    ref_operator = getattr(a, array_attribute)
+    tst_operator = getattr(b, array_attribute)
+
+    if argument is not None:
+        assert_equal(tst_operator(argument),
+                     ref_operator(argument))
+    else:
+        # some array attributes like __abs__ don't take arguments
+        assert_equal(tst_operator(),
+                     ref_operator())
