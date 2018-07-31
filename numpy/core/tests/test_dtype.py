@@ -893,3 +893,5 @@ def test_naint64_not_subclassed():
     # requirement is based on focus to avoid subclassing for new
     # dtypes after SciPy 2018 discussion of dtypes in NumPy
     assert_(not issubclass(np.naint64, np.int64))
+    # this one is actually true for np.int64:
+    assert_(not issubclass(np.naint64, np.int_))
