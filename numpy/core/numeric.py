@@ -30,7 +30,7 @@ if sys.version_info[0] < 3:
 from . import umath
 from .umath import (multiply, invert, sin, UFUNC_BUFSIZE_DEFAULT,
                     ERR_IGNORE, ERR_WARN, ERR_RAISE, ERR_CALL, ERR_PRINT,
-                    ERR_LOG, ERR_DEFAULT, PINF, NAN)
+                    ERR_LOG, ERR_DEFAULT, PINF, NAN, NOT_AVAILABLE_INT64)
 from . import numerictypes
 from .numerictypes import longlong, intc, int_, float_, complex_, bool_
 from ._internal import TooHardError, AxisError
@@ -74,7 +74,7 @@ __all__ = [
     'False_', 'True_', 'bitwise_not', 'CLIP', 'RAISE', 'WRAP', 'MAXDIMS',
     'BUFSIZE', 'ALLOW_THREADS', 'ComplexWarning', 'full', 'full_like',
     'matmul', 'shares_memory', 'may_share_memory', 'MAY_SHARE_BOUNDS',
-    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError']
+    'MAY_SHARE_EXACT', 'TooHardError', 'AxisError', 'NA']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2913,6 +2913,7 @@ _setdef()
 
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN
+NA = NOT_AVAILABLE_INT64
 False_ = bool_(False)
 True_ = bool_(True)
 

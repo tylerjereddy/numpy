@@ -1,5 +1,6 @@
 #ifndef __NPY_MATH_C99_H_
 #define __NPY_MATH_C99_H_
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +54,17 @@ NPY_INLINE static float __npy_nzerof(void)
     return __bint.__f;
 }
 
+/* try just returning a False bool in C for np.NA at the moment
+   I think we will want to just skip over the 8 bytes that follow
+   the 1-byte "missing" bool when iterating over the experimental
+   72-bit naint64 dtype anyway */
+NPY_INLINE static bool __npy_na_val_int64(void)
+{
+    bool na_val = false;
+    return na_val;
+}
+
+#define NPY_NOT_AVAILABLE_INT64 __npy_na_val_int64() 
 #define NPY_INFINITYF __npy_inff()
 #define NPY_NANF __npy_nanf()
 #define NPY_PZEROF __npy_pzerof()

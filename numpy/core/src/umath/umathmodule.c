@@ -402,6 +402,9 @@ PyMODINIT_FUNC initumath(void)
     PyModule_AddObject(m, "PZERO", PyFloat_FromDouble(NPY_PZERO));
     PyModule_AddObject(m, "NZERO", PyFloat_FromDouble(NPY_NZERO));
     PyModule_AddObject(m, "NAN", PyFloat_FromDouble(NPY_NAN));
+    /* Probably wrong, but structural placeholder to feed through
+     * low-level definition of np.NA */
+    PyModule_AddObject(m, "NOT_AVAILABLE_INT64", PyBool_FromLong(NPY_NOT_AVAILABLE_INT64));
 
 #if defined(NPY_PY3K)
     s = PyDict_GetItemString(d, "true_divide");
