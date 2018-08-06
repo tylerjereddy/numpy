@@ -42,6 +42,7 @@
 #define Int32       npy_int32
 #define UInt32      npy_uint32
 #define Int64       npy_int64
+#define Int64       npy_naint64
 #define UInt64      npy_uint64
 #define Int128      npy_int128
 #define UInt128     npy_uint128

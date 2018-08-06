@@ -519,6 +519,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_INT64 NPY_LONG
 #define NPY_UINT64 NPY_ULONG
         typedef long npy_int64;
+        typedef long npy_naint64;
         typedef unsigned long npy_uint64;
 #define PyInt64ScalarObject PyLongScalarObject
 #define PyInt64ArrType_Type PyLongArrType_Type
@@ -595,6 +596,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #    define NPY_INT64 NPY_LONGLONG
 #    define NPY_UINT64 NPY_ULONGLONG
         typedef npy_longlong npy_int64;
+        typedef npy_longlong npy_naint64;
         typedef npy_ulonglong npy_uint64;
 #    define PyInt64ScalarObject PyLongLongScalarObject
 #    define PyInt64ArrType_Type PyLongLongArrType_Type
@@ -685,6 +687,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_INT64 NPY_INT
 #define NPY_UINT64 NPY_UINT
         typedef int npy_int64;
+        typedef int npy_naint64;
         typedef unsigned int npy_uint64;
 #    define PyInt64ScalarObject PyIntScalarObject
 #    define PyInt64ArrType_Type PyIntArrType_Type
@@ -755,6 +758,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_INT64 NPY_SHORT
 #define NPY_UINT64 NPY_USHORT
         typedef short npy_int64;
+        typedef short npy_naint64;
         typedef unsigned short npy_uint64;
 #    define PyInt64ScalarObject PyShortScalarObject
 #    define PyInt64ArrType_Type PyShortArrType_Type
@@ -826,6 +830,7 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_INT64 NPY_BYTE
 #define NPY_UINT64 NPY_UBYTE
         typedef signed char npy_int64;
+        typedef signed char npy_naint64;
         typedef unsigned char npy_uint64;
 #    define PyInt64ScalarObject PyByteScalarObject
 #    define PyInt64ArrType_Type PyByteArrType_Type

@@ -494,7 +494,7 @@ _set_array_types()
 
 
 genericTypeRank = ['bool', 'int8', 'uint8', 'int16', 'uint16',
-                   'int32', 'uint32', 'int64', 'uint64', 'int128',
+                   'int32', 'uint32', 'int64', 'naint64', 'uint64', 'int128',
                    'uint128', 'float16',
                    'float32', 'float64', 'float80', 'float96', 'float128',
                    'float256',
