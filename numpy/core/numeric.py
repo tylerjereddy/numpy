@@ -2944,6 +2944,25 @@ class NA_Type(int):
     def __str__(self):
         return "NA"
 
+    # always propagate to np.NA for simple
+    # arithmetic operations (at least for now)
+
+    def __add__(self, val):
+        return self
+
+    def __div__(self, val):
+        return self
+
+    def __floordiv__(self, val):
+        return self
+
+    def __mul__(self, val):
+        return self
+
+    def __sub__(self, val):
+        return self
+
+
 # temporarily use an instance that looks like an int with value of 0
 # but with various other attrs overriden as needed
 NA = NA_Type()

@@ -982,10 +982,10 @@ def test_naint64_dual_array_propagation():
     assert_equal(a // b, expected_div)
     # NOTE: what happens with true division -- float promotion?
 
-    expected_prod = np.array([np.NA, 6, np.NA, 9], dtype=np.naint64)
+    expected_prod = np.array([np.NA, 9, np.NA, 9], dtype=np.naint64)
     assert_equal(a * b, expected_prod)
 
-    expected_sum = np.array([np.NA, 5, np.NA, 10], dtype=np.naint64)
+    expected_sum = np.array([np.NA, 6, np.NA, 10], dtype=np.naint64)
     assert_equal(a + b, expected_sum)
 
     expected_diff = np.array([np.NA, 0, np.NA, -8], dtype=np.naint64)
