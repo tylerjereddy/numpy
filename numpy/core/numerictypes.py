@@ -377,6 +377,8 @@ def _add_integer_aliases():
 
         for info, charname, intname, Intname in [
                 (i_info,'i%d' % (bits//8,), 'int%d' % bits, 'Int%d' % bits),
+                # the new naint64 stuff:
+                (i_info,'x%d' % (bits//8,), 'naint%d' % bits, 'NAInt%d' % bits),
                 (u_info,'u%d' % (bits//8,), 'uint%d' % bits, 'UInt%d' % bits)]:
             if bits not in seen_bits:
                 # sometimes two different types have the same number of bits
@@ -916,12 +918,13 @@ del key
 typecodes = {'Character':'c',
              'Integer':'bhilqp',
              'UnsignedInteger':'BHILQP',
+             'NAInteger':'xx',
              'Float':'efdg',
              'Complex':'FDG',
-             'AllInteger':'bBhHiIlLqQpP',
+             'AllInteger':'bBhHiIlLqQpPxx',
              'AllFloat':'efdgFDG',
              'Datetime': 'Mm',
-             'All':'?bhilqpBHILQPefdgFDGSUVOMm'}
+             'All':'?bhilqpBHILQPefdgFDGSUVOMmxx'}
 
 # backwards compatibility --- deprecated name
 typeDict = sctypeDict
@@ -938,7 +941,8 @@ typeNA = sctypeNA
 # U -> Unicode string
 # V -> record
 # O -> Python object
-_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm']
+# x -> not available 64 bit integer (naint64-related)
+_kind_list = ['b', 'u', 'i', 'f', 'c', 'S', 'U', 'V', 'O', 'M', 'm', 'x']
 
 __test_types = '?'+typecodes['AllInteger'][:-2]+typecodes['AllFloat']+'O'
 __len_test_types = len(__test_types)
