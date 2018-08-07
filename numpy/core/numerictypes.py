@@ -974,6 +974,37 @@ def _can_coerce_all(dtypelist, start=0):
         thisind += 1
     return None
 
+
+class naint64(type):
+    """
+    Subclassing Python type object for the purpose
+    of creating the exploratory dtype naint64.
+
+    What could possibly go wrong?
+    """
+
+    def __init__(self, val):
+        self.val = val
+        if isinstance(self.val, np.NA_Type):
+            # for now, we aim to preserve the int() dtype
+            # of the object to avoid dtype=object casting
+            self.val = 0
+            # need to set a flag so we can switch the repr
+            # to "NA" below
+            self.NA_status = True
+        else:
+            self.NA_status = False
+
+    def __repr__(self):
+        # override to properly represent np.NA
+        if self.NA_status:
+            return "NA"
+        else:
+            # normal int
+            return str(self.val)
+
+
+
 def _register_types():
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)

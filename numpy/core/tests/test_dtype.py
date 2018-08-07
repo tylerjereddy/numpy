@@ -782,11 +782,16 @@ def test_naint64_storage_reliability():
     b[0] = np.NA
     assert_equal(a, expected)
 
+def test_NA_repr():
+    # test the NA repr in isolation
+    a = np.NA
+    assert_(a.__repr__() == 'NA')
+
 def test_naint64_repr():
     # the string "NA" should be used to represent missing
     # values in naint64 arrays as in NEP-0012
     a = np.array([np.NA, 1, 2], dtype=np.naint64)
-    assert_(a.__repr__() == 'array([NA, 1, 2])')
+    assert_(a.__repr__() == 'array([NA, 1, 2]), dtype=naint64')
     assert_(a.__str__() == '[NA, 1, 2]')
 
 def test_naint64_repr_flexibility():

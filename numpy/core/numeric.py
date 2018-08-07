@@ -2913,9 +2913,40 @@ _setdef()
 
 Inf = inf = infty = Infinity = PINF
 nan = NaN = NAN
+# this np.NA definition is basically ignored for now because
+# of redefining below, but preserve this at the moment to maintain
+# the low-level implementation connection in case we come back to that
+# approach later (my work here is just aa much about dtype internals
+# exploration as it is the actual dtype I'm trying to implement)
 NA = NOT_AVAILABLE_INT64
 False_ = bool_(False)
 True_ = bool_(True)
+
+class NA_Type(int):
+    '''Implementation of the np.NA singleton for use in
+       np.naint64 dtype arrays.
+
+       Realistically, we may prefer to use the lower-level
+       NOT_AVAILABLE_INT64 approach above, but a Python
+       class object implementation may be easier to handle
+       in the early stages.
+    '''
+
+    # make np.NA look like an int for now -- test-driven dev
+    # until we can't bend to the tests anymore
+    def __init__(self):
+        super(NA_Type, self).__init__()
+
+    def __repr__(self):
+        # np.NA should have a __repr__ equivalent to the string "NA"
+        return "NA"
+
+    def __str__(self):
+        return "NA"
+
+# temporarily use an instance that looks like an int with value of 0
+# but with various other attrs overriden as needed
+NA = NA_Type()
 
 
 def extend_all(module):
