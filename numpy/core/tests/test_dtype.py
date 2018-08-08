@@ -990,3 +990,34 @@ def test_naint64_dual_array_propagation():
 
     expected_diff = np.array([np.NA, 0, np.NA, -8], dtype=np.naint64)
     assert_equal(a - b, expected_diff)
+
+@pytest.mark.parametrize("attribute, argument", [
+    ('__abs__', None),
+    ('__add__', 5),
+    ('__mul__', 22.2),
+    ('__truediv__', 0),
+    ('__sub__', 5.6),
+    ])
+def test_NA_singleton_propagation(attribute, argument):
+    # test that a variety of np.NA singleton arithmetic
+    # operations simply propagate the np.NA object
+    # TODO: this work for i.e., np.NA + 5 but NOT
+    # 5 + np.NA
+
+    tst_operator = getattr(np.NA, attribute)
+
+    if argument is not None:
+        assert_equal(tst_operator(argument), np.NA)
+    else:
+        # some array attributes like __abs__ don't take arguments
+        assert_equal(tst_operator(), np.NA)
+
+def test_NA_not_zero_int():
+    # np.NA should not be equivalent to the integer zero
+    # this was its default setting in early stages of dev
+    # TODO: expand to more comparisons
+    assert_(np.NA != 0)
+
+def test_NA_equiv_self():
+    # test that np.NA is equivalent to itself
+    assert_(np.NA == np.NA)

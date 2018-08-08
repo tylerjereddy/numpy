@@ -2950,7 +2950,7 @@ class NA_Type(int):
     def __add__(self, val):
         return self
 
-    def __div__(self, val):
+    def __truediv__(self, val):
         return self
 
     def __floordiv__(self, val):
@@ -2961,6 +2961,37 @@ class NA_Type(int):
 
     def __sub__(self, val):
         return self
+
+    def __abs__(self):
+        return self
+
+    # np.NA looks like zero because it is currently the int 0
+    # with various attributes overriden; try to discourage
+    # comparisons with 0 though by making it appear as if
+    # np.NA is not like 0 at all
+
+    def __name__(self):
+        return 'naint64'
+
+    def __eq__(self, val):
+        if not hasattr(val, '__name__'):
+            # can't possibly be np.NA
+            return False
+        elif self.__name__ == val.__name__:
+            return True
+        else:
+            # has the attr but wrong name
+            return False
+
+    def __ne__(self, val):
+        if not hasattr(val, '__name__'):
+            # can't possibly be np.NA
+            return True
+        elif self.__name__ == val.__name__:
+            return False
+        else:
+            # has the attr but wrong name
+            return True
 
 
 # temporarily use an instance that looks like an int with value of 0
