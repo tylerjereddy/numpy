@@ -1,7 +1,7 @@
 """
 A place for code to be called from core C-code.
 
-Some things are more easily handled Python.
+Some things are more easily handled in Python.
 
 """
 from __future__ import division, absolute_import, print_function

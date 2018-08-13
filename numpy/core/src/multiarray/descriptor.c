@@ -704,6 +704,17 @@ _convert_from_list(PyObject *obj, int align)
     return NULL;
 }
 
+static PyObject *
+_commastring(PyObject *astr)
+{
+    int startindex = 0;
+    PyObject *result_list;
+    Py_ssize_t str_len = PyString_Size(astr);
+
+    while startindex < str_len:
+
+}
+
 
 /*
  * comma-separated string
