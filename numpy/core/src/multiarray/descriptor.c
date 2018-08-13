@@ -711,7 +711,9 @@ _commastring(PyObject *astr)
     PyObject *result_list;
     Py_ssize_t str_len = PyString_Size(astr);
 
-    while startindex < str_len:
+    while (startindex < str_len) {
+
+    }
 
 }
 
