@@ -1404,6 +1404,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 	    printf("working with a subtype of numpy.generic\n");
             *at = PyArray_DescrFromTypeObject(obj);
 	    printf("*at object being returned: ");
+	    //printf("obj->name: %s\n", (PyTypeObject *)obj->tp_name);
             return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
         if (PyType_IsSubtype((PyTypeObject *)obj, &PyNaIntArrType_Type)) {
@@ -1892,6 +1893,8 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_typename_get(PyArray_Descr *self)
 {
+    printf("\n----------------\n");
+    printf("Inside arraydescr_typename_get\n");
     static const char np_prefix[] = "numpy.";
     const int np_prefix_len = sizeof(np_prefix) - 1;
     PyTypeObject *typeobj = self->typeobj;
@@ -1902,6 +1905,7 @@ arraydescr_typename_get(PyArray_Descr *self)
     int suffix_len;
 
     if (PyTypeNum_ISUSERDEF(self->type_num)) {
+	printf("Using a user defined type\n");
         s = strrchr(typeobj->tp_name, '.');
         if (s == NULL) {
             res = PyUString_FromString(typeobj->tp_name);
@@ -1919,6 +1923,7 @@ arraydescr_typename_get(PyArray_Descr *self)
          * - if starts with "numpy.", that prefix is removed
          * - if ends with "_", that suffix is removed
          */
+	printf("Using a NumPy defined type\n");
         len = strlen(typeobj->tp_name);
 
         if (! strncmp(typeobj->tp_name, np_prefix, np_prefix_len)) {

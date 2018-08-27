@@ -1012,6 +1012,7 @@ class naint64(nai64):
         return 'naint64'
 
     def _type_(self):
+        print("self.val in naint64:", self.val)
         return 'naint64'
 
     def _length_(self):
@@ -1019,7 +1020,6 @@ class naint64(nai64):
 
 
 def _register_types():
-    numbers.Integral.register(naint64)
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)

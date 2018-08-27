@@ -4279,6 +4279,18 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_free = (freefunc)gentype_free;
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
+    PyNaIntArrType_Type.tp_dealloc = (destructor)gentype_dealloc;
+    PyNaIntArrType_Type.tp_as_number = &gentype_as_number;
+    PyNaIntArrType_Type.tp_as_buffer = &gentype_as_buffer;
+    PyNaIntArrType_Type.tp_as_mapping = &gentype_as_mapping;
+    PyNaIntArrType_Type.tp_flags = BASEFLAGS;
+    PyNaIntArrType_Type.tp_methods = gentype_methods;
+    PyNaIntArrType_Type.tp_getset = gentype_getsets;
+    PyNaIntArrType_Type.tp_new = NULL;
+    PyNaIntArrType_Type.tp_alloc = gentype_alloc;
+    PyNaIntArrType_Type.tp_free = (freefunc)gentype_free;
+    PyNaIntArrType_Type.tp_richcompare = gentype_richcompare;
+
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
     /*
      * need to add dummy versions with filled-in nb_index
