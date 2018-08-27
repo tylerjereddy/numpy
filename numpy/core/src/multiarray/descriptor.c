@@ -64,6 +64,7 @@ Borrowed_PyMapping_GetItemString(PyObject *o, char *key)
 static PyArray_Descr *
 _arraydescr_fromctypes(PyObject *obj)
 {
+    printf("Inside _arraydescr_fromctypes\n");
     PyObject *dtypedescr;
     PyArray_Descr *newdescr;
     int ret;
@@ -72,6 +73,7 @@ _arraydescr_fromctypes(PyObject *obj)
     dtypedescr = PyObject_GetAttrString(obj, "_type_");
     PyErr_Clear();
     if (dtypedescr) {
+	printf("_type_ attr is detected\n");
         ret = PyArray_DescrConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
@@ -94,6 +96,7 @@ _arraydescr_fromctypes(PyObject *obj)
             }
             return newdescr;
         }
+	printf("no _type_ attr detected for obj\n");
         PyErr_Clear();
         return NULL;
     }
@@ -128,21 +131,28 @@ _arraydescr_fromctypes(PyObject *obj)
 NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
 {
+    printf("inside _arraydescr_fromobj\n");
     PyObject *dtypedescr;
     PyArray_Descr *newdescr = NULL;
     int ret;
 
     /* For arbitrary objects that have a "dtype" attribute */
     dtypedescr = PyObject_GetAttrString(obj, "dtype");
+    printf("dtypedescr: ");
+    PyObject_Print(dtypedescr, stdout, Py_PRINT_RAW);
+    printf("\n");
     PyErr_Clear();
     if (dtypedescr != NULL) {
         ret = PyArray_DescrConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
+	    printf("returning newdescr\n");
             return newdescr;
         }
+	printf("PyArray_DescrConverter failed\n");
         PyErr_Clear();
     }
+    printf("main return\n");
     return _arraydescr_fromctypes(obj);
 }
 
@@ -1363,6 +1373,10 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
+    printf("*** Inside PyArray_DescrConverter\n");
+    printf("obj: ");
+    PyObject_Print(obj, stdout, Py_PRINT_RAW);
+    printf("\n");
     int check_num = NPY_NOTYPE + 10;
     PyObject *item;
     int elsize = 0;
@@ -1372,19 +1386,30 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
     /* default */
     if (obj == Py_None) {
+        printf("assigning NumPy default type\n");
         *at = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
         return NPY_SUCCEED;
     }
 
     if (PyArray_DescrCheck(obj)) {
+	printf("Checkpoint A\n");
         *at = (PyArray_Descr *)obj;
         Py_INCREF(*at);
         return NPY_SUCCEED;
     }
 
     if (PyType_Check(obj)) {
+	printf("Checkpoint B\n");
         if (PyType_IsSubtype((PyTypeObject *)obj, &PyGenericArrType_Type)) {
+	    printf("working with a subtype of numpy.generic\n");
             *at = PyArray_DescrFromTypeObject(obj);
+	    printf("*at object being returned: ");
+            return (*at) ? NPY_SUCCEED : NPY_FAIL;
+        }
+        if (PyType_IsSubtype((PyTypeObject *)obj, &PyNaIntArrType_Type)) {
+	    printf("** working with a subtype of numpy.naint64\n");
+            *at = PyArray_DescrFromTypeObject(obj);
+	    printf("*at object being returned: ");
             return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
         check_num = NPY_OBJECT;
@@ -1423,17 +1448,21 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             check_num = NPY_VOID;
         }
         else {
+	    printf("** Checkpoint B1\n");
             *at = _arraydescr_fromobj(obj);
             if (*at) {
+                printf("** Checkpoint B2\n");
                 return NPY_SUCCEED;
             }
         }
+        printf("** Checkpoint B3\n");
         goto finish;
     }
 
     /* or a typecode string */
 
     if (PyUnicode_Check(obj)) {
+	printf("Checkpoint C\n");
         /* Allow unicode format strings: convert to bytes */
         int retval;
         PyObject *obj2;
@@ -1447,21 +1476,25 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
     if (PyBytes_Check(obj)) {
+	printf("Checkpoint D\n");
         char *type = NULL;
         Py_ssize_t len = 0;
 
         /* Check for a string typecode. */
         if (PyBytes_AsStringAndSize(obj, &type, &len) < 0) {
+            printf("Checkpoint E\n");
             goto error;
         }
 
         /* Empty string is invalid */
         if (len == 0) {
+            printf("Checkpoint F\n");
             goto fail;
         }
 
         /* check for commas present or first (or second) element a digit */
         if (_check_for_commastring(type, len)) {
+            printf("Checkpoint G\n");
             *at = _convert_from_commastring(obj, 0);
             return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
@@ -1490,6 +1523,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
         /* Check for datetime format */
         if (is_datetime_typestr(type, len)) {
+            printf("Checkpoint G\n");
             *at = parse_dtype_from_datetime_typestr(type, len);
             if (*at == NULL) {
                 return NPY_FAIL;
@@ -1507,6 +1541,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         }
         /* A kind + size like 'f8' */
         else {
+            printf("Checkpoint H\n");
             char *typeend = NULL;
             int kind;
 
@@ -1554,6 +1589,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         }
     }
     else if (PyTuple_Check(obj)) {
+            printf("Checkpoint H\n");
         /* or a tuple */
         *at = _convert_from_tuple(obj, 0);
         if (*at == NULL){
@@ -1590,6 +1626,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         goto fail;
     }
     else {
+            printf("Checkpoint I\n");
         *at = _arraydescr_fromobj(obj);
         if (*at) {
             return NPY_SUCCEED;

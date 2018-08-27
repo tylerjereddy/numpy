@@ -472,6 +472,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
         new = PyArray_DescrNewFromType(NPY_VOID);
         conv = _arraydescr_fromobj(type);
+	printf("Not a registered data type object\n");
         if (conv) {
             new->fields = conv->fields;
             Py_INCREF(new->fields);

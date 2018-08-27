@@ -399,6 +399,7 @@ _add_integer_aliases()
 # We use these later
 void = allTypes['void']
 generic = allTypes['generic']
+nai64 = allTypes['naint64']
 
 #
 # Rework the Python names (so that float and complex and int are consistent
@@ -975,7 +976,7 @@ def _can_coerce_all(dtypelist, start=0):
     return None
 
 
-class naint64(type):
+class naint64(nai64):
     """
     Subclassing Python type object for the purpose
     of creating the exploratory dtype naint64.
@@ -1003,9 +1004,22 @@ class naint64(type):
             # normal int
             return str(self.val)
 
+    @property
+    def dtype(self):
+        # _arraydescr_fromobj() handles
+        # dtype creation for arbitrary objects
+        # that have a "dtype" attribute
+        return 'naint64'
+
+    def _type_(self):
+        return 'naint64'
+
+    def _length_(self):
+        return 9
 
 
 def _register_types():
+    numbers.Integral.register(naint64)
     numbers.Integral.register(integer)
     numbers.Complex.register(inexact)
     numbers.Real.register(floating)
