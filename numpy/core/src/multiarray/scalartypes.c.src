@@ -2454,6 +2454,51 @@ static PySequenceMethods voidtype_as_sequence = {
 };
 
 
+static PyObject *
+unicodetype_concat(PyObject *self, PyObject *other)
+{
+    printf("*** inside unicodetype_concat ***\n");
+    PyObject *item, *other_item;
+    PyArrayIterObject *self_iter;
+    PyArrayIterObject *other_iter;
+
+    self_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+    other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
+    
+    while (other_iter->index < other_iter->size) {
+        /* retrieve item from self */
+        item = PyArray_GETITEM(self, PyArray_ITER_DATA(self_iter));
+        /* retrieve item from other array in concat op */
+        other_item = PyArray_GETITEM(other, PyArray_ITER_DATA(other_iter));
+        /*
+         * concat the two Unicode PyObject elements and
+         * place them at appropriate index in self
+         */
+        PyArray_SETITEM(self,
+                        PyArray_ITER_DATA(self_iter),
+                        PyUnicode_Concat(item, other_item));
+        /* probably need XDECREFs */
+        PyArray_ITER_NEXT(self_iter);
+        PyArray_ITER_NEXT(other_iter);
+    }
+    return self;
+}
+
+
+static PySequenceMethods unicodetype_as_sequence = {
+    0,                                           /*sq_length*/
+    (binaryfunc)unicodetype_concat,              /*sq_concat*/
+    0,                                           /*sq_repeat*/
+    0,                                           /*sq_item*/
+    0,                                           /*sq_slice*/
+    0,                                           /*sq_ass_item*/
+    0,                                           /* ssq_ass_slice */
+    0,                                           /* sq_contains */
+    0,                                           /* sq_inplace_concat */
+    0,                                           /* sq_inplace_repeat */
+};
+
+
 static Py_ssize_t
 gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
 {
@@ -4260,6 +4305,7 @@ initialize_numeric_types(void)
 
     PyUnicodeArrType_Type.tp_repr = unicodetype_repr;
     PyUnicodeArrType_Type.tp_str = unicodetype_str;
+    PyUnicodeArrType_Type.tp_as_sequence = &unicodetype_as_sequence;
 
     PyVoidArrType_Type.tp_methods = voidtype_methods;
     PyVoidArrType_Type.tp_getset = voidtype_getsets;

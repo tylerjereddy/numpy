@@ -1368,6 +1368,8 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     int i, j;
 
     ufunc_name = ufunc_get_name_cstr(ufunc);
+    //printf("ufunc_name: %s\n", ufunc_name);
+
 
     /*
      * If there are user-loops search them first.
@@ -1387,10 +1389,12 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     }
 
     types = ufunc->types;
+    //printf("before iterating over ufunc->ntypes\n");
     for (i = 0; i < ufunc->ntypes; ++i) {
         /* Copy the types into an int array for matching */
         for (j = 0; j < nargs; ++j) {
             if (types[j] != dtypes[j]->type_num) {
+                //printf("about to break!!\n");
                 break;
             }
         }
@@ -1403,9 +1407,24 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         types += nargs;
     }
 
+    //printf("ufunc_name: %s\n", ufunc_name);
+    if ((PyObject_RichCompareBool(ufunc_name, "add", Py_EQ) == 1) &&
+        dtypes[0]->type_num == NPY_UNICODE &&
+        dtypes[1]->type_num == NPY_UNICODE) {
+        printf("it is add and unicode types!!\n");
+        *out_innerloop = ufunc->functions[i];
+        *out_innerloopdata = ufunc->data[i];
+        return 0;
+    }
     errmsg = PyUString_FromFormat("ufunc '%s' did not contain a loop "
                     "with signature matching types ", ufunc_name);
     for (i = 0; i < nargs; ++i) {
+        //printf("dtypes in PyUFunc_DefaultLegacyInnerLoopSelector ");
+        //PyObject_Print(PyObject_Repr((PyObject *)dtypes[i]),
+                   //stdout,
+                   //Py_PRINT_RAW);
+        //printf("%i\n", dtypes[i]->type_num);
+        //printf("\n");
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)dtypes[i]));
         if (i < nargs - 1) {

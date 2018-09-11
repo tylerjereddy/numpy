@@ -4675,6 +4675,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->obj = NULL;
     ufunc->userloops=NULL;
 
+    //printf("NPY_UNICODE: %i\n", NPY_UNICODE);
+    //printf("name: %s\n", name);
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
     ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
