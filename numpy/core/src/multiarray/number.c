@@ -309,6 +309,7 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 static PyObject *
 unicodetype_concat(PyObject *self, PyObject *other)
 {
+    printf("unicodetype_concat checkpoint A\n");
     /*
      * I initially aimed to place unicodetype_concat
      * in a function pointer slot within a
@@ -346,6 +347,8 @@ unicodetype_concat(PyObject *self, PyObject *other)
     other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
     ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
 
+    /* TODO: handle case where other has only a single element */
+
     while (other_iter->index < other_iter->size) {
         /* retrieve item from self */
         item = PyArray_GETITEM((PyArrayObject *)self,
@@ -381,6 +384,7 @@ static PyObject *
 array_add(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
+    PyObject *m2_converted;
     /*
      * this function is pointed to by the nb_add
      * slot used by np.ndarray, and apparently also
@@ -397,9 +401,31 @@ array_add(PyArrayObject *m1, PyObject *m2)
          * like a sensible requirement for __add__ for np.ndarray
          * type struct, but so far we haven't been checking this
          */
-        if (PyArray_DESCR(m1)->type_num == NPY_UNICODE &&
-            PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE) {
-            return unicodetype_concat((PyObject *)m1, m2);
+        if (!PyArray_Check(m2)) {
+            if (PyUnicode_Check(m2)) {
+                printf("Checkpoint A\n");
+                /* should be able to convert to a Unicode array */
+                m2_converted = PyArray_FROM_OTF(m2,
+                                                NPY_UNICODE,
+                                                NPY_ARRAY_FORCECAST);
+                printf("Checkpoint B\n");
+                if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
+                    PyArray_DESCR((PyArrayObject *)m2_converted)->type_num == NPY_UNICODE)) {
+                    printf("Checkpoint C\n");
+                    return unicodetype_concat((PyObject *)m1, 
+                                              (PyObject *)m2_converted);
+                }
+            }
+            /* 
+             * if m2 isn't an array and can't be cast to NPY_UNICODE
+             * we will just let control flow pass through, for now
+             */
+        }
+        else if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
+                 PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE)) {
+            printf("Checkpoint D\n");
+            /* both m1 and m2 are unicode_ arrays */
+            return unicodetype_concat((PyObject *)m1, (PyObject *)m2);
         }
     }
 
