@@ -309,7 +309,6 @@ PyArray_GenericInplaceUnaryFunction(PyArrayObject *m1, PyObject *op)
 static PyObject *
 unicodetype_concat(PyObject *self, PyObject *other)
 {
-    printf("unicodetype_concat checkpoint A\n");
     /*
      * I initially aimed to place unicodetype_concat
      * in a function pointer slot within a
@@ -319,7 +318,8 @@ unicodetype_concat(PyObject *self, PyObject *other)
      * array_add, which now experimentally dispatches to
      * this function if two unicode_ arrays are detected
      */
-    PyObject *item, *other_item;
+    PyObject *item;
+    PyObject *other_item;
     PyArrayIterObject *self_iter;
     PyArrayIterObject *other_iter;
     PyArrayIterObject *ret_iter;
@@ -347,27 +347,41 @@ unicodetype_concat(PyObject *self, PyObject *other)
     other_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)other);
     ret_iter = (PyArrayIterObject *)PyArray_IterNew((PyObject *)ret);
 
-    /* TODO: handle case where other has only a single element */
+    /* TODO: handle shape mismatches and so on */
 
-    while (other_iter->index < other_iter->size) {
+    /* handle case where other has only a single element */
+    if (other_iter->size == 1) {
+        /* we'll iterate over self & add other each time */
+        other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                     PyArray_ITER_DATA(other_iter));
+    }
+
+    while (self_iter->index < self_iter->size) {
         /* retrieve item from self */
         item = PyArray_GETITEM((PyArrayObject *)self,
                                PyArray_ITER_DATA(self_iter));
         /* retrieve item from other array in concat op */
-        other_item = PyArray_GETITEM((PyArrayObject *)other,
-                                     PyArray_ITER_DATA(other_iter));
+        if (other_iter->size > 1) {
+            other_item = PyArray_GETITEM((PyArrayObject *)other,
+                                         PyArray_ITER_DATA(other_iter));
+        }
+        PyObject_Print(other_item, stdout, Py_PRINT_RAW);
 
         /*
          * concat the two Unicode PyObject elements and
          * place them at appropriate index in ret
          */
         combined = PyUnicode_Concat(item, other_item);
+        PyObject_Print(combined, stdout, Py_PRINT_RAW);
         PyArray_SETITEM((PyArrayObject *)ret,
                          PyArray_ITER_DATA(ret_iter),
                          combined);
         /* probably need XDECREFs */
         PyArray_ITER_NEXT(self_iter);
-        PyArray_ITER_NEXT(other_iter);
+        if (other_iter->size > 1) {
+            /* only iterate over other if it is not "scalar" */
+            PyArray_ITER_NEXT(other_iter);
+        }
         PyArray_ITER_NEXT(ret_iter);
     }
 
@@ -403,15 +417,12 @@ array_add(PyArrayObject *m1, PyObject *m2)
          */
         if (!PyArray_Check(m2)) {
             if (PyUnicode_Check(m2)) {
-                printf("Checkpoint A\n");
                 /* should be able to convert to a Unicode array */
                 m2_converted = PyArray_FROM_OTF(m2,
                                                 NPY_UNICODE,
                                                 NPY_ARRAY_FORCECAST);
-                printf("Checkpoint B\n");
                 if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
                     PyArray_DESCR((PyArrayObject *)m2_converted)->type_num == NPY_UNICODE)) {
-                    printf("Checkpoint C\n");
                     return unicodetype_concat((PyObject *)m1, 
                                               (PyObject *)m2_converted);
                 }
@@ -423,7 +434,6 @@ array_add(PyArrayObject *m1, PyObject *m2)
         }
         else if (PyArray_DESCR(m1)->type_num == NPY_UNICODE && (
                  PyArray_DESCR((PyArrayObject *)m2)->type_num == NPY_UNICODE)) {
-            printf("Checkpoint D\n");
             /* both m1 and m2 are unicode_ arrays */
             return unicodetype_concat((PyObject *)m1, (PyObject *)m2);
         }

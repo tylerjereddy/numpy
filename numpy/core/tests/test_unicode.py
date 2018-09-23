@@ -66,9 +66,9 @@ def test_string_cast():
 
 @pytest.mark.parametrize("arr1, arr2, expected", [
     # concat two 1D unicode_ arrays of same size
-    #(np.array(['a', 'b'], dtype='U1'),
-     #np.array(['c', 'd'], dtype='U1'), 
-     #np.array(['ac', 'bd'], dtype='U2')),
+    (np.array(['a', 'b'], dtype='U1'),
+     np.array(['c', 'd'], dtype='U1'),
+     np.array(['ac', 'bd'], dtype='U2')),
     # concat 1D unicode array with Python unicode
     # object
     (np.array(['x', 'y'], dtype='U1'),
