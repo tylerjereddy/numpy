@@ -1,0 +1,21 @@
+# https://docs.microsoft.com/azure/devops/pipelines/languages/python
+
+jobs:
+- job: macOS
+  pool:
+    vmIMage: 'macOS-10.13'
+  steps:
+  - task: CondaEnvironment@0
+    inputs:
+      environmentName: 'python-3.6'
+      packageSpecs: 'python=3.6'
+  - script: conda install -n python-3.6 cython pathlib pytz pytest pytest-xdist
+    displayName: 'Install Dependencies'
+  - script: python runtests.py
+    displayName: 'Build and Run Tests'
+	
+#- job: Windows
+  #pool:
+    #vmIMage: 'vs2017-win2016'
+  #steps:
+  #- script:
