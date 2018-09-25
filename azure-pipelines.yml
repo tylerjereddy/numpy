@@ -7,7 +7,7 @@ jobs:
   steps:
   - task: CondaEnvironment@0
     inputs:
-      environmentName: 'python-3.6'
+      environmentName: 'python36'
       packageSpecs: 'python=3.6'
   - script: conda install -n python-3.6 cython pathlib pytz pytest pytest-xdist
     displayName: 'Install Dependencies'
