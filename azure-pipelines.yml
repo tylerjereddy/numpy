@@ -13,9 +13,3 @@ jobs:
     displayName: 'Install Dependencies'
   - script: python runtests.py
     displayName: 'Build and Run Tests'
-	
-#- job: Windows
-  #pool:
-    #vmIMage: 'vs2017-win2016'
-  #steps:
-  #- script:
