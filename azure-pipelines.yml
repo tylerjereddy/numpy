@@ -11,8 +11,8 @@ jobs:
       environmentName: 'python36'
       packageSpecs: 'python=3.6'
       updateConda: True
-      createOptions: --prefix=$HOME
-  - script: conda install -n python3.6 cython pathlib pytz pytest pytest-xdist
+      createOptions: --prefix=$HOME --debug
+  - script: conda install cython pathlib pytz pytest pytest-xdist
     displayName: 'Install Dependencies'
   - script: python runtests.py
     displayName: 'Build and Run Tests'
