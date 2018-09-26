@@ -11,11 +11,7 @@ jobs:
   - task: CondaEnvironment@0
     inputs:
       environmentName: 'python36'
-      packageSpecs: 'python=3.6'
+      packageSpecs: 'python=3.6 cython pathlib pytz pytest pytest-xdist'
       updateConda: True
-  - script: | 
-       source activate python36
-       conda install -n python36 cython pathlib pytz pytest pytest-xdist
-    displayName: 'Install Dependencies'
   - script: python runtests.py
     displayName: 'Build and Run Tests'
