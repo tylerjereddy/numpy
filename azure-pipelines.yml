@@ -1,4 +1,5 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
+# NOTE: the full test suite isn't passing on Azure macos yet
 
 jobs:
 - job: macOS
