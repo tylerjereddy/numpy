@@ -5,15 +5,15 @@ jobs:
   pool:
     vmIMage: 'macOS-10.13'
   steps:
+  # manually creating the binary path is awkward, but we otherwise
+  # end up with permission issues creating the conda env
   - script: sudo mkdir -p /usr/local/miniconda/envs/python36/bin
   - task: CondaEnvironment@0
     inputs:
-      createCustomEnvironment: True
       environmentName: 'python36'
       packageSpecs: 'python=3.6'
       updateConda: True
-      createOptions: --debug
-  - script: conda install cython pathlib pytz pytest pytest-xdist
+  - script: conda install -n python36 cython pathlib pytz pytest pytest-xdist
     displayName: 'Install Dependencies'
   - script: python runtests.py
     displayName: 'Build and Run Tests'
