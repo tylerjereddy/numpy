@@ -5,17 +5,13 @@ jobs:
   pool:
     vmIMage: 'macOS-10.13'
   steps:
-  # manually creating the binary path is awkward, but we otherwise
-  # end up with permission issues creating the conda env
-  # manually cleaning the path now as well because the 
-  # cleanEnvironment azure conda directive doesn't seem
-  # to have sufficient permissions
-  - script: rm -rf /usr/local/miniconda/envs/python36/bin || true
-  - script: sudo mkdir -p /usr/local/miniconda/envs/python36/bin
-  - task: CondaEnvironment@0
+  - task: UsePythonVersion@0
     inputs:
-      environmentName: 'python36'
-      packageSpecs: 'python=3.6 cython pathlib pytz pytest pytest-xdist'
-      updateConda: True
-  - script: source activate python36; conda list; which python; python runtests.py
+      versionSpec: '3.6'
+      architecture: 'x64'
+  - script: python -m pip install --upgrade pip setuptools wheel
+    displayName: 'Install tools'
+  - script: python -m pip install cython pathlib pytz pytest pytest-xdist
+    displayName: 'Install dependencies'
+  - script: python runtests.py
     displayName: 'Build and Run Tests'
