@@ -10,9 +10,8 @@ jobs:
   # manually cleaning the path now as well because the 
   # cleanEnvironment azure conda directive doesn't seem
   # to have sufficient permissions
-  - script: |
-    sudo rmdir /usr/local/miniconda/envs/python36/bin
-    sudo mkdir -p /usr/local/miniconda/envs/python36/bin
+  - script: sudo rmdir /usr/local/miniconda/envs/python36/bin
+  - script: sudo mkdir -p /usr/local/miniconda/envs/python36/bin
   - task: CondaEnvironment@0
     inputs:
       environmentName: 'python36'
