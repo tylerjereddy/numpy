@@ -13,6 +13,8 @@
 #include "common.h"
 #include "number.h"
 #include "temp_elide.h"
+#include "datetime_strings.h"
+#include "_datetime.h"
 
 #include "binop_override.h"
 #include "ufunc_override.h"
@@ -345,6 +347,40 @@ array_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_remainder(PyArrayObject *m1, PyObject *m2)
 {
+    PyObject *result;
+    double remainder;
+    PyArray_Descr *desc;
+    PyArray_Descr *desc2;
+    PyArray_DatetimeMetaData *arr_meta;
+    PyArray_DatetimeMetaData *arr2_meta;
+    PyObject *dt;
+    PyObject *dt2;
+    PyObject *sec1;
+    PyObject *sec2;
+
+    /*
+     * allow m1 % m2 when both are timedelta scalars with
+     * seconds units
+     */
+    if (PyArray_IsScalar(m1, Timedelta) && PyArray_IsScalar(m2, Timedelta)) {
+        desc = PyArray_DESCR((PyArrayObject *)PyArray_FROM_O((PyObject *)m1));
+        desc2 = PyArray_DESCR((PyArrayObject *)PyArray_FROM_O(m2));
+        arr_meta = get_datetime_metadata_from_dtype(desc);
+        arr2_meta = get_datetime_metadata_from_dtype(desc2);
+        if (arr_meta->base == NPY_FR_s && arr2_meta->base == NPY_FR_s) {
+            dt = PyObject_CallMethod((PyObject *)m1, "item", "");
+            sec1 = PyObject_CallMethod(dt, "total_seconds", "");
+            dt2 = PyObject_CallMethod(m2, "item", "");
+            sec2 = PyObject_CallMethod(dt2, "total_seconds", "");
+            /* use built-in remainder on floating point seconds */
+            remainder = PyFloat_AsDouble(PyNumber_Remainder(sec1, sec2));
+            /* use casting to return a timedelta64 remainder */
+            result = PyNumber_Add(PyNumber_Subtract((PyObject *)m1, 
+                                                    (PyObject *)m1),
+                                                    PyLong_FromDouble(remainder));
+            return result;
+        }
+    }
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_remainder, array_remainder);
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }

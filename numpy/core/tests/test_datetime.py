@@ -1611,6 +1611,18 @@ class TestDateTime(object):
         assert_raises(TypeError, np.arange, np.timedelta64(0, 'Y'),
                                 np.timedelta64(5, 'D'))
 
+    @pytest.mark.parametrize("val1, val2, expected", [
+        # case from gh-12092
+        (np.timedelta64(7, 's'),
+         np.timedelta64(3, 's'),
+         np.timedelta64(1, 's')),
+        (np.timedelta64(17, 's'),
+         np.timedelta64(22, 's'),
+         np.timedelta64(17, 's')),
+        ])
+    def test_timedelta_modulus(self, val1, val2, expected):
+        assert_equal(val1 % val2, expected)
+
     def test_timedelta_arange_no_dtype(self):
         d = np.array(5, dtype="m8[D]")
         assert_equal(np.arange(d, d + 1), d)
