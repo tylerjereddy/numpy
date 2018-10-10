@@ -473,8 +473,12 @@ TIMEDELTA_md_m_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
 NPY_NO_EXPORT void
 TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+TIMEDELTA_mm_m_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+
 /* Special case equivalents to above functions */
 
+#define TIMEDELTA_remainder TIMEDELTA_mm_m_remainder
 #define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_true_divide TIMEDELTA_md_m_divide
 #define TIMEDELTA_mm_d_true_divide TIMEDELTA_mm_d_divide

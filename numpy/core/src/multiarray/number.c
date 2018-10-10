@@ -13,8 +13,6 @@
 #include "common.h"
 #include "number.h"
 #include "temp_elide.h"
-#include "datetime_strings.h"
-#include "_datetime.h"
 
 #include "binop_override.h"
 #include "ufunc_override.h"
@@ -248,6 +246,7 @@ PyArray_GenericAccumulateFunction(PyArrayObject *m1, PyObject *op, int axis,
 NPY_NO_EXPORT PyObject *
 PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
 {
+    printf("PyArray_GenericBinaryFunction checkpoint A\n");
     /*
      * I suspect that the next few lines are buggy and cause NotImplemented to
      * be returned at weird times... but if we raise an error here, then
@@ -260,6 +259,10 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
         return Py_NotImplemented;
     }
 
+    printf("PyArray_GenericBinaryFunction checkpoint B\n");
+    printf("op: ");
+    PyObject_Print(op, stdout, Py_PRINT_RAW);
+    printf("\n");
     return PyObject_CallFunctionObjArgs(op, m1, m2, NULL);
 }
 
@@ -336,10 +339,14 @@ array_divide(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
 
+    printf("array_divide checkpoint A\n");
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_divide, array_divide);
+    printf("array_divide checkpoint B\n");
     if (try_binary_elide(m1, m2, &array_inplace_divide, &res, 0)) {
+        printf("array_divide checkpoint C\n");
         return res;
     }
+    printf("array_divide checkpoint D\n");
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -347,41 +354,9 @@ array_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_remainder(PyArrayObject *m1, PyObject *m2)
 {
-    PyObject *result;
-    double remainder;
-    PyArray_Descr *desc;
-    PyArray_Descr *desc2;
-    PyArray_DatetimeMetaData *arr_meta;
-    PyArray_DatetimeMetaData *arr2_meta;
-    PyObject *dt;
-    PyObject *dt2;
-    PyObject *sec1;
-    PyObject *sec2;
-
-    /*
-     * allow m1 % m2 when both are timedelta scalars with
-     * seconds units
-     */
-    if (PyArray_IsScalar(m1, Timedelta) && PyArray_IsScalar(m2, Timedelta)) {
-        desc = PyArray_DESCR((PyArrayObject *)PyArray_FROM_O((PyObject *)m1));
-        desc2 = PyArray_DESCR((PyArrayObject *)PyArray_FROM_O(m2));
-        arr_meta = get_datetime_metadata_from_dtype(desc);
-        arr2_meta = get_datetime_metadata_from_dtype(desc2);
-        if (arr_meta->base == NPY_FR_s && arr2_meta->base == NPY_FR_s) {
-            dt = PyObject_CallMethod((PyObject *)m1, "item", "");
-            sec1 = PyObject_CallMethod(dt, "total_seconds", "");
-            dt2 = PyObject_CallMethod(m2, "item", "");
-            sec2 = PyObject_CallMethod(dt2, "total_seconds", "");
-            /* use built-in remainder on floating point seconds */
-            remainder = PyFloat_AsDouble(PyNumber_Remainder(sec1, sec2));
-            /* use casting to return a timedelta64 remainder */
-            result = PyNumber_Add(PyNumber_Subtract((PyObject *)m1, 
-                                                    (PyObject *)m1),
-                                                    PyLong_FromDouble(remainder));
-            return result;
-        }
-    }
+    printf("array_remainder checkpoint A\n");
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_remainder, array_remainder);
+    printf("array_remainder checkpoint B\n");
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
@@ -747,8 +722,10 @@ array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_divide(PyArrayObject *m1, PyObject *m2)
 {
+    printf("array_inplace_divide checkpoint A\n");
     INPLACE_GIVE_UP_IF_NEEDED(
             m1, m2, nb_inplace_divide, array_inplace_divide);
+    printf("array_inplace_divide checkpoint B\n");
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.divide);
 }
 #endif
@@ -756,6 +733,7 @@ array_inplace_divide(PyArrayObject *m1, PyObject *m2)
 static PyObject *
 array_inplace_remainder(PyArrayObject *m1, PyObject *m2)
 {
+    printf("array_inplace_remainder checkpoint A\n");
     INPLACE_GIVE_UP_IF_NEEDED(
             m1, m2, nb_inplace_remainder, array_inplace_remainder);
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.remainder);
@@ -831,13 +809,17 @@ static PyObject *
 array_true_divide(PyArrayObject *m1, PyObject *m2)
 {
     PyObject *res;
+    printf("array_true_divide checkpoint A\n");
 
     BINOP_GIVE_UP_IF_NEEDED(m1, m2, nb_true_divide, array_true_divide);
+    printf("array_true_divide checkpoint B\n");
     if (PyArray_CheckExact(m1) &&
             (PyArray_ISFLOAT(m1) || PyArray_ISCOMPLEX(m1)) &&
             try_binary_elide(m1, m2, &array_inplace_true_divide, &res, 0)) {
+        printf("array_true_divide checkpoint C\n");
         return res;
     }
+    printf("array_true_divide checkpoint D\n");
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.true_divide);
 }
 

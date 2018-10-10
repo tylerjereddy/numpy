@@ -131,6 +131,7 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes)
 {
+    printf("Inside PyUFunc_DefaultTypeResolver\n");
     int i, nop = ufunc->nin + ufunc->nout;
     int retval = 0, any_object = 0;
     NPY_CASTING input_casting;
@@ -1560,6 +1561,11 @@ ufunc_loop_matches(PyUFuncObject *self,
                     char *out_err_src_typecode,
                     char *out_err_dst_typecode)
 {
+    printf("ufunc_loop_matches checkpoint A\n");
+    printf("self:");
+    PyObject_Print(self, stdout, Py_PRINT_RAW);
+    printf("\n");
+    printf("self->ntypes: %i\n", self->ntypes);
     npy_intp i, nin = self->nin, nop = nin + self->nout;
 
     /*
@@ -1579,6 +1585,7 @@ ufunc_loop_matches(PyUFuncObject *self,
          * seem right.
          */
         if (types[i] == NPY_OBJECT && !any_object && self->ntypes > 1) {
+            printf("ufunc_loop_matches checkpoint A1\n");
             return 0;
         }
 
@@ -1595,6 +1602,7 @@ ufunc_loop_matches(PyUFuncObject *self,
             tmp = PyArray_DescrFromType(types[i]);
         }
         if (tmp == NULL) {
+            printf("ufunc_loop_matches checkpoint A2\n");
             return -1;
         }
 
@@ -1613,12 +1621,14 @@ ufunc_loop_matches(PyUFuncObject *self,
             if (!PyArray_CanCastTypeTo(PyArray_DESCR(op[i]), tmp,
                                                     input_casting)) {
                 Py_DECREF(tmp);
+                printf("ufunc_loop_matches checkpoint B\n");
                 return 0;
             }
         }
         else {
             if (!PyArray_CanCastArrayTo(op[i], tmp, input_casting)) {
                 Py_DECREF(tmp);
+                printf("ufunc_loop_matches checkpoint C\n");
                 return 0;
             }
         }
@@ -1649,6 +1659,7 @@ ufunc_loop_matches(PyUFuncObject *self,
         }
     }
 
+    printf("ufunc_loop_matches checkpoint D\n");
     return 1;
 }
 
@@ -1953,6 +1964,7 @@ linear_search_type_resolver(PyUFuncObject *self,
                         int any_object,
                         PyArray_Descr **out_dtype)
 {
+    printf("linear_search_type_resolver checkpoint A\n");
     npy_intp i, j, nin = self->nin, nop = nin + self->nout;
     int types[NPY_MAXARGS];
     const char *ufunc_name;
@@ -1997,6 +2009,7 @@ linear_search_type_resolver(PyUFuncObject *self,
      * appear consistent (as noted by some asymmetry in the generated
      * coercion tables for np.add).
      */
+    printf("linear_search_type_resolver checkpoint B\n");
     no_castable_output = 0;
     for (i = 0; i < self->ntypes; ++i) {
         char *orig_types = self->types + i*self->nargs;
@@ -2014,9 +2027,11 @@ linear_search_type_resolver(PyUFuncObject *self,
                     &err_dst_typecode)) {
             /* Error */
             case -1:
+                printf("linear_search_type_resolver checkpoint C\n");
                 return -1;
             /* Found a match */
             case 1:
+                printf("linear_search_type_resolver checkpoint D\n");
                 set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
                 return 0;
         }
@@ -2036,6 +2051,7 @@ linear_search_type_resolver(PyUFuncObject *self,
          * TODO: We should try again if the casting rule is same_kind
          *       or unsafe, and look for a function more liberally.
          */
+        printf("linear_search_type_resolver checkpoint E\n");
         PyErr_Format(PyExc_TypeError,
                 "ufunc '%s' not supported for the input types, and the "
                 "inputs could not be safely coerced to any supported "
