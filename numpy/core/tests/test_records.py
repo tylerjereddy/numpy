@@ -330,18 +330,25 @@ class TestFromrecords(object):
 class TestPathUsage(object):
     # Test that pathlib.Path can be used
     def test_tofile_fromfile(self):
-        with temppath(suffix='.bin') as path:
-            path = Path(path)
-            a = np.empty(10, dtype='f8,i4,a5')
-            a[5] = (0.5,10,'abcde')
-            a.newbyteorder('<')
-            with path.open("wb") as fd:
-                a.tofile(fd)
-            x = np.core.records.fromfile(path,
-                                         formats='f8,i4,a5',
-                                         shape=10,
-                                         byteorder='<')
-            assert_array_equal(x, a)
+        success_count = 0
+        for i in range(200):
+            print("i:", i)
+            print("success_count:", success_count)
+            with temppath(suffix='.bin') as path:
+                path = Path(path)
+                a = np.empty(10, dtype='f8,i4,a5')
+                a[5] = (0.5,10,'abcde')
+                a.newbyteorder('<')
+                with path.open("wb") as fd:
+                    a.tofile(fd)
+                x = np.core.records.fromfile(path,
+                                             formats='f8,i4,a5',
+                                             shape=10,
+                                             byteorder='<')
+                print("x:", x)
+                print("a:", a)
+                assert_array_equal(x, a)
+                success_count += 1
 
 
 class TestRecord(object):
