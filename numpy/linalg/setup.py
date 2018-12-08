@@ -53,8 +53,41 @@ def configuration(parent_package='', top_path=None):
         extra_info=lapack_info,
         libraries=['npymath'],
     )
+
+    # TODO: link extension robustly on non-Linux
+    if len(get_info('openblas')) > 2:
+        # if openblas is being used to compile NumPy
+        # build an extension to gather more information
+        # about the openblas version used
+        config.add_extension('openblas_config',
+                             sources=['openblas_config.c'],
+                             extra_info=lapack_info,
+                             libraries=['openblas'],
+                             )
     return config
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
     setup(configuration=configuration)
+    import numpy.distutils.system_info
+    from numpy.distutils.system_info import get_info
+    if len(get_info('openblas')) > 2:
+        # openblas >= 0.3.4 provides version information;
+        # numpy/distutils/system_info has already initialized
+        # at this stage, so just update the dictionary for
+        # openblas info
+        from numpy.linalg import openblas_config
+        openblas_config_str = openblas_config._openblas_info()
+        openblas_config_list = openblas_config_str.split()
+        # slightly obscure API for system_info objects;
+        # they weren't really intended for public modification
+        # as the docs clearly indicate
+        info = system_info.system_info.saved_results['openblas_info']
+        new_info = {}
+        if openblas_config_list[0] == b"OpenBLAS":
+            # version string will be present
+            new_info['version'] = openblas_config_list[1]
+        else:
+            # older OpenBLAS config API
+            new_info['version'] = None
+        info.update(new_info)
