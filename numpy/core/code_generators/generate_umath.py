@@ -511,6 +511,13 @@ defdict = {
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
+'clip':
+    Ufunc(3, 1, ReorderableNone,
+          docstrings.get('numpy.core.umath.clip'),
+          'PyUFunc_SimpleUniformOperationTypeResolver',
+          TD(noobj),
+          [TypeDescription('O', 'npy_ObjectClip', 'OOO', 'O')]
+          ),
 'fmax':
     Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
@@ -959,6 +966,9 @@ arity_lookup = {
         'O': 'OO_O',
         'P': 'OO_O_method',
     },
+    (3, 1): {
+        'O': 'OOO_O',
+    }
 }
 
 #for each name
@@ -1135,6 +1145,7 @@ def make_code(funcdict, filename):
     #include "ufunc_type_resolution.h"
     #include "loops.h"
     #include "matmul.h"
+    #include "clip.h"
     %s
 
     static int
