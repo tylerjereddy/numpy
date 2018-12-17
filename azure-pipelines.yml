@@ -78,6 +78,8 @@ jobs:
   - script: python setup.py build -j 4 install
     displayName: 'Build NumPy'
     env:
+      CFLAGS: -mavx2
+      NPY_DISTUTILS_APPEND_FLAGS: 1
       BLAS: None
       LAPACK: None
       ATLAS: None
