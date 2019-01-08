@@ -128,6 +128,8 @@ import copy
 import warnings
 from glob import glob
 from functools import reduce
+import ctypes
+
 if sys.version_info[0] < 3:
     from ConfigParser import NoOptionError
     from ConfigParser import RawConfigParser as ConfigParser
@@ -1744,6 +1746,46 @@ class openblas_info(blas_info):
     def check_embedded_lapack(self, info):
         return True
 
+    def parse_openblas_version(self, library_dirs, info,
+                               backup_lib_dirs=None):
+        # OpenBLAS >= 0.3.4 has a C extension API for
+        # version number
+
+        # use a list for versions for the case where
+        # more than one is detected on lib paths
+        # this can happen in non-pathological scenarios
+        # because of similar lib files with different names
+        # especially given conventions relating to linking
+        # lib files to ones with simpler names, etc.
+        info['versions'] = []
+        print("** library dirs in parse_openblas_version:", library_dirs)
+        if library_dirs is None:
+            library_dirs = backup_lib_dirs
+        if backup_lib_dirs is not None:
+            for libdir in backup_lib_dirs:
+                if libdir not in library_dirs:
+                    library_dirs.append(libdir)
+        for library_dir in library_dirs:
+            for entry in glob(os.path.join(library_dir, '*openblas*')):
+                try:
+                    dll = ctypes.CDLL(entry)
+                    openblas_get_config = dll.openblas_get_config
+                    openblas_get_config.restype = ctypes.c_char_p
+                    openblas_config_str = openblas_get_config()
+                    openblas_config_list = openblas_config_str.split()
+                    if openblas_config_list[0] == b"OpenBLAS":
+                        # version string will be present
+                        info['versions'].append(openblas_config_list[1].decode())
+                    else:
+                        # older OpenBLAS config API
+                        info['versions'].append(None)
+                except OSError:
+                    print("** OSError for entry:", entry)
+                    # not all library file types will be valid
+                    # for the parsing above
+                    pass
+        return info
+
     def calc_info(self):
         c = customized_ccompiler()
 
@@ -1753,11 +1795,16 @@ class openblas_info(blas_info):
         if openblas_libs == self._lib_names: # backward compat with 1.8.0
             openblas_libs = self.get_libs('openblas_libs', self._lib_names)
 
+        print("** lib_dirs in calc_info:", lib_dirs)
         info = self.check_libs(lib_dirs, openblas_libs, [])
+        backup_lib_dirs = None
 
+        print("** lib_dirs before msvc check:", lib_dirs)
         if c.compiler_type == "msvc" and info is None:
             from numpy.distutils.fcompiler import new_fcompiler
             f = new_fcompiler(c_compiler=c)
+            backup_lib_dirs = lib_dirs[:]
+            print("** setting backup_lib_dirs for restoration:", backup_lib_dirs)
             if f and f.compiler_type == 'gnu95':
                 # Try gfortran-compatible library files
                 info = self.check_msvc_gfortran_libs(lib_dirs, openblas_libs)
@@ -1778,6 +1825,11 @@ class openblas_info(blas_info):
             return
 
         info['define_macros'] = [('HAVE_CBLAS', None)]
+        print("** info before parse_openblas_version call:", info)
+        print("** backup_lib_dirs before parse_openblas_version call:", backup_lib_dirs)
+        info = self.parse_openblas_version(library_dirs=info['library_dirs'],
+                                           info=info,
+                                           backup_lib_dirs=backup_lib_dirs)
         self.set_info(**info)
 
     def check_msvc_gfortran_libs(self, library_dirs, libraries):

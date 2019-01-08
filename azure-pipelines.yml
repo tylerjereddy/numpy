@@ -9,6 +9,8 @@ jobs:
 - job: Linux_Python_36_32bit_full_with_asserts
   pool:
     vmIMage: 'ubuntu-16.04'
+  variables:
+      OPENBLAS_VERSION: "0.3.5.dev"
   steps:
   - script: |
            docker pull i386/ubuntu:bionic
@@ -20,14 +22,17 @@ jobs:
            apt-get -y install gfortran-5 wget && \
            cd .. && \
            mkdir openblas && cd openblas && \
-           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.4-manylinux1_i686.tar.gz && \
-           tar zxvf openblas-v0.3.4-manylinux1_i686.tar.gz && \
+           wget https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
+           tar zxvf openblas-v0.3.3-186-g701ea883-manylinux1_i686.tar.gz && \
            cp -r ./usr/local/lib/* /usr/lib && \
            cp ./usr/local/include/* /usr/include && \
            cd ../numpy && \
            NUMPY_EXPERIMENTAL_ARRAY_FUNCTION=1 \
            F77=gfortran-5 F90=gfortran-5 \
-           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml"
+           CFLAGS='-UNDEBUG -std=c99' python3 runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml && \
+           cd .. && \
+           export PYTHONPATH=/numpy/build/testenv/lib/python3.6/site-packages && \
+           python3 -c \"import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['versions'][0] == '$(OPENBLAS_VERSION)', 'received versions: ' + ' '.join(get_info('openblas')['versions']) + ' and expected $(OPENBLAS_VERSION)'\""
     displayName: 'Run 32-bit Ubuntu Docker Build / Tests'
   - task: PublishTestResults@2
     inputs:
@@ -100,6 +105,7 @@ jobs:
       # appveyor / Windows config
       OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
       OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      OPENBLAS_VERSION: "0.3.6.dev"
   strategy:
     maxParallel: 6
     matrix:
@@ -151,8 +157,10 @@ jobs:
       $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
       Write-Host "Python Version: $pyversion"
       $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+      $target_dll = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.dll"
       Write-Host "target path: $target"
       cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
+      cp $tmpdir\$(BITS)\bin\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.dll $target_dll
     displayName: 'Download / Install OpenBLAS'
   - powershell: |
       choco install -y mingw --forcex86 --force
@@ -180,6 +188,10 @@ jobs:
     displayName: 'Build NumPy'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
+  - script: |
+      cd D:/a
+      python -c "import numpy; from numpy.distutils.system_info import get_info; assert get_info('openblas')['versions'][0] == '$(OPENBLAS_VERSION)', 'received versions: ' + ' '.join(get_info('openblas')['versions']) + ' and expected $(OPENBLAS_VERSION)'"
+    displayName: 'Post-mortem OpenBLAS version confirmation'
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
