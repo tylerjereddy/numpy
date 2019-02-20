@@ -2295,7 +2295,7 @@ def generate_config_py(target):
 import os
 import sys
 
-extra_dll_dir = os.path.join(os.path.dirname(__file__), '.libs')
+extra_dll_dir = os.path.join(os.path.dirname(__file__), 'core')
 
 if sys.platform == 'win32' and os.path.isdir(extra_dll_dir):
     os.environ.setdefault('PATH', '')

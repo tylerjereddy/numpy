@@ -177,7 +177,11 @@ jobs:
           pip install $_.FullName
       }
     displayName: 'Build NumPy'
-  - script: cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && cd numpy
+  - powershell: |
+      $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+      ls "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\site-packages\\numpy\\core"
+    displayName: 'probe DLL locations'
+  - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
     displayName: 'For gh-12667; Windows DLL resolution'
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
