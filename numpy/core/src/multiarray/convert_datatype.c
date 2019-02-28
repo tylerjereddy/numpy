@@ -397,25 +397,21 @@ NPY_NO_EXPORT int
 PyArray_CanCastSafely(int fromtype, int totype)
 {
     PyArray_Descr *from;
-    printf("Inside PyArray_CanCastSafely\n");
 
     /* Fast table lookup for small type numbers */
     if ((unsigned int)fromtype < NPY_NTYPES &&
                                 (unsigned int)totype < NPY_NTYPES) {
-        printf("PyArray_CanCastSafely checkpoint A\n");
         return _npy_can_cast_safely_table[fromtype][totype];
     }
 
     /* Identity */
     if (fromtype == totype) {
-        printf("PyArray_CanCastSafely checkpoint B\n");
         return 1;
     }
     /* Special-cases for some types */
     switch (fromtype) {
         case NPY_DATETIME:
         case NPY_TIMEDELTA:
-        printf("PyArray_CanCastSafely checkpoint C\n");
         case NPY_OBJECT:
         case NPY_VOID:
             return 0;
@@ -426,7 +422,6 @@ PyArray_CanCastSafely(int fromtype, int totype)
         case NPY_BOOL:
         case NPY_DATETIME:
         case NPY_TIMEDELTA:
-            printf("PyArray_CanCastSafely checkpoint D\n");
             return 0;
         case NPY_OBJECT:
         case NPY_VOID:
@@ -434,13 +429,11 @@ PyArray_CanCastSafely(int fromtype, int totype)
     }
 
     from = PyArray_DescrFromType(fromtype);
-    printf("PyArray_CanCastSafely checkpoint E\n");
     /*
      * cancastto is a NPY_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
     if (from->f->cancastto) {
-        printf("PyArray_CanCastSafely checkpoint F\n");
         int *curtype = from->f->cancastto;
 
         while (*curtype != NPY_NOTYPE) {
@@ -465,12 +458,8 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
     int to_type_num = to->type_num;
     npy_bool ret;
 
-    printf("Inside PyArray_CanCastTo\n");
-
     ret = (npy_bool) PyArray_CanCastSafely(from_type_num, to_type_num);
-    printf("initial ret value in PyArray_CanCastTo: %i\n", ret);
     if (ret) {
-        printf("checkpoint A\n");
         /* Check String and Unicode more closely */
         if (from_type_num == NPY_STRING) {
             if (to_type_num == NPY_STRING) {
@@ -490,7 +479,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
          * more precision as safe.
          */
         else if (from_type_num == NPY_DATETIME && to_type_num == NPY_DATETIME) {
-            printf("checkpoint B\n");
             PyArray_DatetimeMetaData *meta1, *meta2;
             meta1 = get_datetime_metadata_from_dtype(from);
             if (meta1 == NULL) {
@@ -508,7 +496,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
         }
         else if (from_type_num == NPY_TIMEDELTA &&
                                     to_type_num == NPY_TIMEDELTA) {
-            printf("checkpoint C\n");
             PyArray_DatetimeMetaData *meta1, *meta2;
             meta1 = get_datetime_metadata_from_dtype(from);
             if (meta1 == NULL) {
@@ -551,7 +538,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
                 ret = 1;
             }
             else if (from->kind == 'u') {
-                printf("checkpoint Z\n");
                 /* Guard against unexpected integer size */
                 if (from->elsize > 8 || from->elsize < 0) {
                     ret = 0;
@@ -574,7 +560,6 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
             }
         }
     }
-    printf("checkpoint D\n");
     return ret;
 }
 
