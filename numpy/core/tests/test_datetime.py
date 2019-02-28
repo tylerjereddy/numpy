@@ -72,9 +72,9 @@ class TestDateTime(object):
         assert_(not np.can_cast('m8', 'M8', casting='safe'))
         assert_(not np.can_cast('M8', 'm8', casting='safe'))
 
-        # Can cast safely/same_kind from integer to timedelta
-        assert_(np.can_cast('i8', 'm8', casting='same_kind'))
-        assert_(np.can_cast('i8', 'm8', casting='safe'))
+        # Cannot cast safely/same_kind from integer to timedelta
+        assert_(not np.can_cast('i8', 'm8', casting='same_kind'))
+        assert_(not np.can_cast('i8', 'm8', casting='safe'))
 
         # Cannot cast safely/same_kind from float to timedelta
         assert_(not np.can_cast('f4', 'm8', casting='same_kind'))
@@ -1824,7 +1824,11 @@ class TestDateTime(object):
 
     def test_timedelta_arange_no_dtype(self):
         d = np.array(5, dtype="m8[D]")
-        assert_equal(np.arange(d, d + 1), d)
+        e = np.array(6, dtype="m8")
+        assert_equal(np.arange(d, e), d)
+        # casting an int64 to m8 is now prohibited
+        # so np.arange(d, d + 1) is no longer possible
+        assert_raises(TypeError, np.add, d, 1)
         assert_raises(ValueError, np.arange, d)
 
     def test_datetime_maximum_reduce(self):
