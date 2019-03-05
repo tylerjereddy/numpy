@@ -1798,6 +1798,11 @@ class TestClip(object):
         with assert_warns(DeprecationWarning):
             assert_equal(d.clip(min=np.nan, max=10), d)
 
+    def test_object_clip(self):
+        a = np.arange(10, dtype=object)
+        actual = np.clip(a, 1, 5)
+        expected = np.array([1, 1, 2, 3, 4, 5, 5, 5, 5, 5])
+        assert actual.tolist() == expected.tolist()
 
 class TestAllclose(object):
     rtol = 1e-5
