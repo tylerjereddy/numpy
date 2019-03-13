@@ -95,6 +95,7 @@ jobs:
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
   - script: |
+      export PATH=/usr/local/Cellar/gcc@4.9/4.9.4_1/bin:$PATH
       echo $PATH
       echo "which gcc"
       which gcc
