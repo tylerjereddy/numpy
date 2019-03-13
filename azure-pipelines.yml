@@ -96,6 +96,12 @@ jobs:
     displayName: 'Run Refuide Check'
   - script: |
       echo $PATH
+      echo "which gcc"
+      which gcc
+      echo "which gcc49"
+      which gcc49
+      echo "which clang"
+      which clang
       python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
     env:
