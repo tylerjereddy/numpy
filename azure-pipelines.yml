@@ -94,8 +94,12 @@ jobs:
       CC: /usr/bin/clang
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
-  - script: python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
+  - script: |
+      echo $PATH
+      python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
+    env:
+      CC: /usr/bin/clang
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
