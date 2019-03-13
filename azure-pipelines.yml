@@ -61,6 +61,8 @@ jobs:
   # just pulling in gfortran
   - script: |
       brew install gcc
+      brew link gcc
+      ls /usr/local/gfortran/lib
       # same version of gfortran as the wheel builds
       #brew install gcc49
       # manually link critical gfortran libraries
