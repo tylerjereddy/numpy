@@ -95,7 +95,6 @@ jobs:
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
   - script: |
-      export PATH=/usr/local/bin:$PATH
       echo $PATH
       echo "which gcc"
       which gcc
@@ -106,7 +105,7 @@ jobs:
       python runtests.py --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
     env:
-      CC: /usr/bin/clang
+      CC: /usr/local/bin/gcc-4.9
   - task: PublishTestResults@2
     inputs:
       testResultsFiles: '**/test-*.xml'
