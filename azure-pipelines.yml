@@ -94,7 +94,12 @@ jobs:
       CC: /usr/bin/clang
   - script: python runtests.py -g --refguide-check
     displayName: 'Run Refuide Check'
-  - script: python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
+  - script: |
+      echo "which gfortran"
+      which gfortran
+      echo "which gfortran-4.9"
+      which gfortran-4.9
+      python runtests.py -n --mode=full -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run Full NumPy Test Suite'
   - task: PublishTestResults@2
     inputs:
