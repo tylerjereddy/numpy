@@ -110,7 +110,9 @@ jobs:
       # openblas URLs from numpy-wheels
       # appveyor / Windows config
       OPENBLAS_32: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win32-gcc_7_1_0.zip"
-      OPENBLAS_64: "https://3f23b170c54c2533c070-1c8a9b3114517dc5fe17b7c3f8c63a43.ssl.cf2.rackcdn.com/openblas-v0.3.3-186-g701ea883-win_amd64-gcc_7_1_0.zip"
+      # experimental 64-bit OpenBLAS build
+      # with GCC runtime statically linked in:
+      OPENBLAS_64: "https://www.dropbox.com/s/lfnzi7hl91yfmoa/libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0p-r0.3.5.dev.a?dl=0"
   strategy:
     maxParallel: 6
     matrix:
@@ -165,6 +167,26 @@ jobs:
       Write-Host "target path: $target"
       cp $tmpdir\$(BITS)\lib\libopenblas_v0.3.3-186-g701ea883-gcc_7_1_0.a $target
     displayName: 'Download / Install OpenBLAS'
+    condition: eq(variables['BITS'], 32)
+  - bash: |
+      # problems with powershell-based download
+      choco install wget
+      wget -O openblas.a https://tinyurl.com/y5se5fa4
+      ls
+    displayName: 'Download OpenBLAS with static GCC runtime link'
+    condition: eq(variables['BITS'], 64)
+  - powershell: |
+      $pyversion = python -c "from __future__ import print_function; import sys; print(sys.version.split()[0])"
+      Write-Host "Python Version: $pyversion"
+      $target = "C:\\hostedtoolcache\\windows\\Python\\$pyversion\\$(PYTHON_ARCH)\\lib\\openblas.a"
+      Write-Host "target path: $target"
+      Write-Host "ls"
+      ls
+      cp openblas.a $target
+      Write-Host "ls $target"
+      ls $target
+    displayName: 'Install OpenBLAS with static GCC runtime link'
+    condition: eq(variables['BITS'], 64)
   - powershell: |
       choco install -y mingw --forcex86 --force --version=5.3.0
     displayName: 'Install 32-bit mingw for 32-bit builds'
@@ -198,6 +220,12 @@ jobs:
     condition: eq(variables['PYTHON_VERSION'], '3.6')
   - script: pushd . && cd .. && python -c "from ctypes import windll; windll.kernel32.SetDefaultDllDirectories(0x00000800); import numpy" && popd
     displayName: 'For gh-12667; Windows DLL resolution'
+  - bash: |
+      choco uninstall -y mingw --all-versions
+      # there's another install to remove as well
+      rm -rf 'C:/Strawberry'
+    displayName: 'Purge mingw64 (gcc / gfortran) on 64-bit with statically linked GCC runtime for OpenBLAS'
+    condition: eq(variables['BITS'], 64)
   - script: python runtests.py -n --show-build-log --mode=$(TEST_MODE) -- -rsx --junitxml=junit/test-results.xml
     displayName: 'Run NumPy Test Suite'
   - task: PublishTestResults@2
