@@ -43,7 +43,7 @@ jobs:
     # the docs even though i.e., numba uses another in their
     # azure config for mac os -- Microsoft has indicated
     # they will patch this issue
-    vmImage: macOS-10.13
+    vmImage: macOS-10.14
   steps:
   # the @0 refers to the (major) version of the *task* on Microsoft's
   # end, not the order in the build matrix nor anything to do
@@ -53,10 +53,6 @@ jobs:
       versionSpec: '3.6'
       addToPath: true
       architecture: 'x64'
-  # NOTE: do we have a compelling reason to use older / newer
-  # versions of Xcode toolchain for testing?
-  - script: /bin/bash -c "sudo xcode-select -s /Applications/Xcode_10.app/Contents/Developer"
-    displayName: 'select Xcode version'
   # NOTE: might be better if we could avoid installing
   # two C compilers, but with homebrew looks like we're
   # now stuck getting the full gcc toolchain instead of
