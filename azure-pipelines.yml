@@ -12,21 +12,6 @@ pr:
     - '*'  # must quote since "*" is a YAML reserved character; we want a string
 
 stages:
-- stage: InitialTests
-  jobs:
-  - job: WindowsFast
-    pool:
-      vmImage: 'VS2017-Win2016'
-    strategy:
-      matrix:
-          Python36-64bit-fast:
-            PYTHON_VERSION: '3.6'
-            PYTHON_ARCH: 'x64'
-            TEST_MODE: fast
-            BITS: 64
-    steps:
-    - template: azure-steps-windows.yml
-
 - stage: ComprehensiveTests
   jobs:
   - job: Linux_Python_38_32bit_full_with_asserts
