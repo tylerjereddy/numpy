@@ -44,6 +44,8 @@ stages:
             target=\$(python3 tools/openblas_support.py) && \
             cp -r \$target/lib/* /usr/lib && \
             cp \$target/include/* /usr/include && \
+            echo '/usr contents:' && \
+            ls -tlrh /usr/lib && ls -tlrh /usr/include && \
             python3 -m pip install -r test_requirements.txt && \
             echo CFLAGS \$CFLAGS && \
             python3 -m pip install -v . && \
