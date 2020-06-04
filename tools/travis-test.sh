@@ -124,6 +124,8 @@ run_test()
     # as the Python coverage data is there
     cd empty
 
+    # validate .codecov.yml file
+    curl -X POST --data-binary @.codecov.yml https://codecov.io/validate
     # Upload coverage files to codecov
     bash <(curl -s https://codecov.io/bash) -X gcov -X coveragepy
   fi
