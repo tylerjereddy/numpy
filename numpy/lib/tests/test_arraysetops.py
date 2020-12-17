@@ -358,6 +358,18 @@ class TestSetOps:
         result = np.in1d(ar1, ar2)
         assert_array_equal(result, expected)
 
+    def test_in1d_tuples(self):
+        # regression test for gh-17923
+        a = np.array([(1,), 2], dtype=object)
+        b = np.array([(1,), (2,)], dtype=object)
+        actual = np.in1d(a, a)
+        expected = np.array([True, True])
+        assert_array_equal(actual, expected)
+
+        actual = np.in1d(b, a)
+        expected = np.array([True, False])
+        assert_array_equal(actual, expected)
+
     def test_union1d(self):
         a = np.array([5, 4, 7, 1, 2])
         b = np.array([2, 4, 3, 3, 2, 1, 5])
