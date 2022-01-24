@@ -48,6 +48,7 @@ import versioneer
 # a lot more robust than what was previously being used.
 builtins.__NUMPY_SETUP__ = True
 
+
 # Needed for backwards code compatibility below and in some CI scripts.
 # The version components are changed from ints to strings, but only VERSION
 # seems to matter outside of this module and it was already a str.
