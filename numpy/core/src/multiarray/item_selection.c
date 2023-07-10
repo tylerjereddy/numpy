@@ -1032,7 +1032,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        dtype = PyArray_DESCR(mps[0]);
+        dtype = PyArray_DESCR(&out[0]);
         Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
     }

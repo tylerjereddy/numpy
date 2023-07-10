@@ -2567,3 +2567,8 @@ class TestRegression:
         expected = np.ones(size, dtype=np.bool_)
         assert_array_equal(np.logical_and(a, b), expected)
 
+    def test_gh_22237(self):
+        a = np.arange(3)
+        b = np.ones((3, 3), dtype=np.int64)
+        out = np.array([np.nan, np.nan, np.nan])
+        np.choose(a, b, out=out)
