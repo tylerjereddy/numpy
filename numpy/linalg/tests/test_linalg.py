@@ -16,7 +16,9 @@ from numpy.exceptions import AxisError
 from numpy import multiply, atleast_2d, inf, asarray
 from numpy import linalg
 from numpy.linalg import matrix_power, norm, matrix_rank, multi_dot, LinAlgError
-from numpy.linalg._linalg import _multi_dot_matrix_chain_order
+from numpy.linalg._linalg import (
+    _multi_dot_matrix_chain_order, _realType, _complexType
+)
 from numpy.testing import (
     assert_, assert_equal, assert_raises, assert_array_equal,
     assert_almost_equal, assert_allclose, suppress_warnings,
@@ -2240,3 +2242,11 @@ def test_linalg_complex128_pass_through():
     # https://github.com/scipy/scipy/issues/19605
     x = np.array([[1.-0.j]], dtype=np.clongdouble)
     linalg.eigvals(x)
+
+
+@pytest.mark.skipif(np.finfo(np.clongdouble).bits != np.finfo(np.cdouble).bits)
+def test_linalg_mapping():
+    assert _realType(np.clongdouble) is np.double
+    assert _realType(np.longdouble) is np.double
+    assert _complexType(np.clongdouble) is np.cdouble
+    assert _complexType(np.longdouble) is np.cdouble
