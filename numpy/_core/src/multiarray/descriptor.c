@@ -521,7 +521,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)conv);
-        PyTuple_SET_ITEM(tup, 1, PyLong_FromLong((long) totalsize));
+        PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
 
         /*
          * Title can be "meta-data".  Only insert it
@@ -642,7 +642,7 @@ _convert_from_list(PyObject *obj, int align)
             }
             maxalign = PyArray_MAX(maxalign, _align);
         }
-        PyObject *size_obj = PyLong_FromLong((long) totalsize);
+        PyObject *size_obj = PyLong_FromSsize_t(totalsize);
         if (!size_obj) {
             Py_DECREF(conv);
             goto fail;
@@ -1156,7 +1156,7 @@ _convert_from_dict(PyObject *obj, int align)
                 goto fail;
             }
 
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(offset));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(offset));
             /* Flag whether the fields are specified out of order */
             if (offset < totalsize) {
                 has_out_of_order_fields = 1;
@@ -1180,7 +1180,7 @@ _convert_from_dict(PyObject *obj, int align)
             if (align && _align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            PyTuple_SET_ITEM(tup, 1, PyLong_FromLong(totalsize));
+            PyTuple_SET_ITEM(tup, 1, PyLong_FromSsize_t(totalsize));
             totalsize += newdescr->elsize;
         }
         if (len == 3) {
