@@ -26,7 +26,7 @@ from numpy.testing import (
     assert_equal,
     assert_raises,
 )
-from numpy.testing._private.utils import requires_deep_recursion
+from numpy.testing._private.utils import requires_deep_recursion, requires_memory
 
 
 def assert_dtype_equal(a, b):
@@ -737,13 +737,10 @@ class TestSubarray:
 
     def test_shape_invalid(self):
         # Check that the shape is valid.
-        max_int = np.iinfo(np.intc).max
         max_intp = np.iinfo(np.intp).max
         # Too large values (the datatype is part of this)
-        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int // 4 + 1)])
-        assert_raises(ValueError, np.dtype, [('a', 'f4', max_int + 1)])
-        assert_raises(ValueError, np.dtype, [('a', 'f4', (max_int, 2))])
-        # Takes a different code path (fails earlier:
+        assert_raises(ValueError, np.dtype, [('a', 'f8', max_intp // 8 + 1)])
+        assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp // 4 + 1)])
         assert_raises(ValueError, np.dtype, [('a', 'f4', max_intp + 1)])
         # Negative values
         assert_raises(ValueError, np.dtype, [('a', 'f4', -1)])
@@ -1252,7 +1249,7 @@ class TestDTypeMakeCanonical:
 
 class TestPickling:
 
-    def check_pickling(self, dtype):
+    def check_pickling(self, dtype, arr_assert=True):
         for proto in range(pickle.HIGHEST_PROTOCOL + 1):
             buf = pickle.dumps(dtype, proto)
             # The dtype pickling itself pickles `np.dtype` if it is pickled
@@ -1262,22 +1259,25 @@ class TestPickling:
             pickled = pickle.loads(buf)
             assert_equal(pickled, dtype)
             assert_equal(pickled.descr, dtype.descr)
+            assert_equal(pickled.itemsize, dtype.itemsize)
             if dtype.metadata is not None:
                 assert_equal(pickled.metadata, dtype.metadata)
-            # Check the reconstructed dtype is functional
-            x = np.zeros(3, dtype=dtype)
-            y = np.zeros(3, dtype=pickled)
-            assert_equal(x, y)
-            assert_equal(x[0], y[0])
+            # some large structured dtypes are too large to
+            # reasonably compare across all elements
+            if arr_assert:
+                # Check the reconstructed dtype is functional
+                x = np.zeros(3, dtype=dtype)
+                y = np.zeros(3, dtype=pickled)
+                assert_equal(x, y)
+                assert_equal(x[0], y[0])
 
     @pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
-    @pytest.mark.xfail(reason="dtype conversion doesn't allow this yet.")
     def test_pickling_large(self):
         # The actual itemsize is larger than a c-integer here.
         dtype = np.dtype(f"({2**31},)i")
-        self.check_pickling(dtype)
+        self.check_pickling(dtype, False)
         dtype = np.dtype(f"({2**31},)i", metadata={"a": "b"})
-        self.check_pickling(dtype)
+        self.check_pickling(dtype, False)
 
     @pytest.mark.parametrize('t', [int, float, complex, np.int32, str, object,
                                    bool])
@@ -2049,3 +2049,34 @@ class TestDTypeSignatures:
 
         params_actual = set(sig.parameters)
         assert params_actual == params_expect
+
+
+@pytest.mark.parametrize("kind, exp", [
+    ([("x", np.float64, 2 ** 28)], (2 ** 28 * 8)),
+    ([("x", np.float64, 2 ** 27), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
+    ([("x", np.float32, 2 ** 28), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
+    ([("x", np.float16, 2 ** 29), ("y", np.float64, 2 ** 27)], (2 ** 28 * 8)),
+    ("2147483648i,2147483648i", 17179869184),
+    ("2147483648f,2147483648f", 17179869184),
+    ("2147483648d,2147483648d", 34359738368),
+    ("2b,2147483648b,2f,4i", 2147483674),
+    (dict(names=["a"], formats=["2147483648i"]), 8589934592),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[1]), 8589934593),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31 - 100]), 10737418140),
+    (dict(names=["a"], formats=["2147483648i"], offsets=[2 ** 31]), 10737418240),
+    (dict(names=["a", "b", "c"], formats=["2147483648b", "16i", "12f"],
+     offsets=[2 ** 31, 2 ** 32, 2 ** 32 + 69]), 4294967413),
+])
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+def test_gh_31308(kind, exp):
+    kind_dtype = np.dtype(kind)
+    assert kind_dtype.itemsize == exp
+
+
+@pytest.mark.skipif(not IS_64BIT, reason="test requires 64-bit system")
+@requires_memory(free_bytes=2e9)
+def test_gh_31308_materialized():
+    kind = [("x", np.float64, 2 ** 28)]
+    kind_dtype = np.dtype(kind)
+    rec_arr = np.array((1,), dtype=kind_dtype)
+    assert rec_arr["x"].size == 2 ** 28
