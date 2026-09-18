@@ -126,52 +126,57 @@ gentype_free(PyObject *v)
 }
 
 
-/* Interned name of a method the scalars forward to the 0-d array. */
-#define NPY_SCALAR_METHOD_NAME(name)                                   \
-    (_npy_module_state->interned_str                                   \
-            .scalar_method_names[NPY_SCALAR_METHOD_##name])
-
-/* Forwarded arguments passed on the C stack; longer calls get a heap buffer. */
-#define NPY_SCALAR_FORWARD_STACK_SIZE 10
-
-/*
- * Forward a scalar method to the equivalent 0-d array.  The object goes in
- * `stack[0]`, which `PY_VECTORCALL_ARGUMENTS_OFFSET` allows the callee to
- * overwrite temporarily, so the arguments are copied one slot up.
- */
 static PyObject *
 gentype_generic_vectorcall(PyObject *self, PyObject *const *args,
-        Py_ssize_t len_args, PyObject *kwnames, PyObject *name)
+        Py_ssize_t len_args, PyObject *kwnames, const char *str)
 {
     PyObject *arr = PyArray_FromScalar(self, NULL);
     if (arr == NULL) {
         return NULL;
     }
-
-    Py_ssize_t nargs = len_args;
-    if (kwnames != NULL) {
-        nargs += PyTuple_GET_SIZE(kwnames);
-    }
-    NPY_ALLOC_WORKSPACE(stack, PyObject *, NPY_SCALAR_FORWARD_STACK_SIZE,
-            nargs + 1);
-    if (stack == NULL) {
-        Py_DECREF(arr);
+    PyObject *meth = PyObject_GetAttrString(arr, str);
+    Py_DECREF(arr);
+    if (meth == NULL) {
         return NULL;
     }
-    stack[0] = arr;
-    if (nargs > 0) {
-        memcpy(stack + 1, args, nargs * sizeof(PyObject *));
-    }
-
-    PyObject *ret = PyObject_VectorcallMethod(name, stack,
-            ((size_t)len_args + 1) | PY_VECTORCALL_ARGUMENTS_OFFSET, kwnames);
-
-    npy_free_workspace(stack);
-    Py_DECREF(arr);
+    PyObject *ret = PyObject_Vectorcall(meth, args, len_args, kwnames);
+    Py_DECREF(meth);
     if (ret != NULL && PyArray_Check(ret)) {
         return PyArray_Return((PyArrayObject *)ret);
     }
     return ret;
+}
+
+
+static PyObject *
+gentype_generic_method(PyObject *self, PyObject *args, PyObject *kwds,
+        char *str)
+{
+    PyObject *arr, *meth, *ret;
+
+    arr = PyArray_FromScalar(self, NULL);
+    if (arr == NULL) {
+        return NULL;
+    }
+    meth = PyObject_GetAttrString(arr, str);
+    if (meth == NULL) {
+        Py_DECREF(arr);
+        return NULL;
+    }
+    if (kwds == NULL) {
+        ret = PyObject_CallObject(meth, args);
+    }
+    else {
+        ret = PyObject_Call(meth, args, kwds);
+    }
+    Py_DECREF(meth);
+    Py_DECREF(arr);
+    if (ret && PyArray_Check(ret)) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    else {
+        return ret;
+    }
 }
 
 
@@ -577,8 +582,7 @@ genint_type_str(PyObject *self)
             item = PyLong_FromUnsignedLongLong(*(npy_ulonglong *)val);
             break;
         default:
-            item = gentype_generic_vectorcall(self, NULL, 0, NULL,
-                    NPY_SCALAR_METHOD_NAME(item));
+            item = gentype_generic_method(self, NULL, NULL, "item");
             break;
     }
     Py_DECREF(dtype);
@@ -2134,7 +2138,7 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 
 /*
  * These gentype_* functions do not take keyword arguments.
- * The proper flag is METH_FASTCALL.
+ * The proper flag is METH_VARARGS or METH_NOARGS.
  */
 /**begin repeat
  *
@@ -2142,10 +2146,9 @@ gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
  *         fill, transpose#
  */
 static PyObject *
-gentype_@name@(PyObject *self, PyObject *const *args, Py_ssize_t len_args)
+gentype_@name@(PyObject *self, PyObject *args)
 {
-    return gentype_generic_vectorcall(self, args, len_args, NULL,
-            NPY_SCALAR_METHOD_NAME(@name@));
+    return gentype_generic_method(self, args, NULL, "@name@");
 }
 /**end repeat**/
 
@@ -2156,26 +2159,23 @@ gentype___copy__(PyObject *self)
     // the only exceptions are scalars with void dtype
     if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type)) {
         // path via array
-        return gentype_generic_vectorcall(self, NULL, 0, NULL,
-                NPY_SCALAR_METHOD_NAME(__copy__));
+        return gentype_generic_method(self, NULL, NULL, "__copy__");
     }
     return Py_NewRef(self);
 }
 
 static PyObject *
-gentype___deepcopy__(PyObject *self, PyObject *const *args,
-        Py_ssize_t len_args)
+gentype___deepcopy__(PyObject *self, PyObject *args)
 {
     // note: maybe the signature needs to be updated as __deepcopy__ can accept the keyword memo
 
     // scalars are immutable, so we can return a new reference
     // the only exceptions are scalars with void dtype
-    // if the number of arguments is not 1, we let the array method do the
+    // if the number of arguments is not 1, we let gentype_generic_method do the
     // error handling
-    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (len_args != 1)) {
+    if (PyObject_IsInstance(self, (PyObject *)&PyVoidArrType_Type) || (PyTuple_Size(args)!=1)) {
         // path via array
-        return gentype_generic_vectorcall(self, args, len_args, NULL,
-                NPY_SCALAR_METHOD_NAME(__deepcopy__));
+        return gentype_generic_method(self, args, NULL, "__deepcopy__");
     }
     return Py_NewRef(self);
 }
@@ -2299,8 +2299,7 @@ static PyObject *
 gentype_@name@(PyObject *self, PyObject *const *args, Py_ssize_t len_args,
         PyObject *kwnames)
 {
-    return gentype_generic_vectorcall(self, args, len_args, kwnames,
-            NPY_SCALAR_METHOD_NAME(@name@));
+    return gentype_generic_vectorcall(self, args, len_args, kwnames, "@name@");
 }
 /**end repeat**/
 
@@ -2335,12 +2334,10 @@ static PyObject *
 /**end repeat**/
 
 static PyObject *
-voidtype_getfield(PyVoidScalarObject *self, PyObject *const *args,
-        Py_ssize_t len_args, PyObject *kwnames)
+voidtype_getfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
     /* Use ndarray's getfield to obtain the field safely */
-    return gentype_generic_vectorcall((PyObject *)self, args, len_args,
-            kwnames, NPY_SCALAR_METHOD_NAME(getfield));
+    return gentype_generic_method((PyObject *)self, args, kwds, "getfield");
 }
 
 static PyObject *
@@ -2740,10 +2737,10 @@ integer_is_integer(PyObject *self, PyObject *NPY_UNUSED(args)) {
 static PyMethodDef gentype_methods[] = {
     {"tolist",
         (PyCFunction)gentype_tolist,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"item",
         (PyCFunction)gentype_item,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"tobytes",
         (PyCFunction)gentype_tobytes,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -2786,7 +2783,7 @@ static PyMethodDef gentype_methods[] = {
         METH_NOARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)gentype___deepcopy__,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
 
     {"__reduce__",
         (PyCFunction) gentype_reduce,
@@ -2806,10 +2803,10 @@ static PyMethodDef gentype_methods[] = {
     /* Methods for array */
     {"fill",
         (PyCFunction)gentype_fill,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"transpose",
         (PyCFunction)gentype_transpose,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"take",
         (PyCFunction)gentype_take,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -2848,7 +2845,7 @@ static PyMethodDef gentype_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"swapaxes",
         (PyCFunction)gentype_swapaxes,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"max",
         (PyCFunction)gentype_max,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -2869,13 +2866,13 @@ static PyMethodDef gentype_methods[] = {
         METH_FASTCALL | METH_KEYWORDS, NULL},
     {"conj",
         (PyCFunction)gentype_conj,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"conjugate",
         (PyCFunction)gentype_conjugate,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"nonzero",
         (PyCFunction)gentype_nonzero,
-        METH_FASTCALL, NULL},
+        METH_VARARGS, NULL},
     {"std",
         (PyCFunction)gentype_std,
         METH_FASTCALL | METH_KEYWORDS, NULL},
@@ -2963,7 +2960,7 @@ static PyGetSetDef voidtype_getsets[] = {
 static PyMethodDef voidtype_methods[] = {
     {"getfield",
         (PyCFunction)voidtype_getfield,
-        METH_FASTCALL | METH_KEYWORDS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"setfield",
         (PyCFunction)voidtype_setfield,
         METH_VARARGS | METH_KEYWORDS, NULL},
